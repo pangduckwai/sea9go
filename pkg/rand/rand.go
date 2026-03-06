@@ -1,25 +1,26 @@
 package rand
 
 import (
-	"math/rand/v2"
+	v2 "math/rand/v2"
 	"time"
 
 	"github.com/bytedance/gopkg/lang/fastrand"
 )
 
+// Seeded get a specific value from the given seed(s).
 func Seeded(n int, seed ...uint64) int {
 	if len(seed) < 1 {
 		panic("Seed missing")
 	} else if len(seed) == 1 {
-		return rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(seed[0]))).IntN(n)
+		return v2.New(v2.NewPCG(uint64(time.Now().UnixNano()), uint64(seed[0]))).IntN(n)
 	} else {
-		return rand.New(rand.NewPCG(uint64(seed[1]), uint64(seed[0]))).IntN(n)
+		return v2.New(v2.NewPCG(uint64(seed[1]), uint64(seed[0]))).IntN(n)
 	}
 }
 
 // Rand pseudo-random number generator in a `games.Game`
 type Rand interface {
-	// Uint64
+	// Uint64 returns a pseudo-random 64-bit value as a uint64.
 	Uint64() uint64
 
 	// Intn returns, as an int, a non-negative pseudo-random number in [0,n). It panics if n <= 0.

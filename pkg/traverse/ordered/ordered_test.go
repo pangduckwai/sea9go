@@ -2,6 +2,7 @@ package ordered
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -72,12 +73,22 @@ func TestTraverse(t *testing.T) {
 	cnt := 0
 	_, err = Traverse(
 		inp,
-		func(in any) (out any, err error) {
+		func(keys []string, in any) (out any, err error) {
 			out = fmt.Sprintf("%v", in)
 			if out != verify[cnt] {
 				t.Fatalf("TestTraverse() %v %v vs %v", cnt, out, verify[cnt])
 			}
 			cnt++
+
+			var sb strings.Builder
+			sb.WriteString(keys[0])
+			for _, k := range keys[1:] {
+				if k[0] != '[' {
+					sb.WriteString(".")
+				}
+				sb.WriteString(k)
+			}
+			fmt.Printf("TestTraverse() %19v %v\n", out, sb.String())
 			return
 		},
 	)

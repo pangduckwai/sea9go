@@ -3,6 +3,7 @@ package traverse
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -73,13 +74,22 @@ func TestTraverse(t *testing.T) {
 	cnt := 0
 	_, err = Traverse(
 		inp,
-		func(in any) (out any, err error) {
-			str := fmt.Sprintf("%v", in)
-			if !slices.Contains(verify, str) {
-				t.Fatalf("TestTraverse() %v %v not found", cnt, str)
+		func(keys []string, in any) (out any, err error) {
+			out = fmt.Sprintf("%v", in)
+			if !slices.Contains(verify, out.(string)) {
+				t.Fatalf("TestTraverse() %v %v not found", cnt, out)
 			}
-			out = str
 			cnt++
+
+			var sb strings.Builder
+			sb.WriteString(keys[0])
+			for _, k := range keys[1:] {
+				if k[0] != '[' {
+					sb.WriteString(".")
+				}
+				sb.WriteString(k)
+			}
+			fmt.Printf("TestTraverse() %19v %v\n", out, sb.String())
 			return
 		},
 	)
