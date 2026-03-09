@@ -12,14 +12,38 @@ import (
 	"time"
 
 	"github.com/bytedance/gopkg/lang/fastrand"
+	"github.com/pangduckwai/sea9go/pkg/io"
 	"github.com/pangduckwai/sea9go/pkg/rand"
 )
 
-// // fastRand returns a uniform value in [0,n)
-//
-//	func fastRand(n int) int {
-//		return int(fastrand.Uint32n(uint32(n)))
-//	}
+func inout(in, out string) (err error) {
+	inp := os.Stdin
+	if in != "" {
+		inp, err = os.Open(in)
+		if err != nil {
+			return
+		}
+		defer inp.Close()
+	}
+
+	opn := os.Stdout
+	if out != "" {
+		opn, err = os.Create(out)
+		if err != nil {
+			return
+		}
+		defer opn.Close()
+	}
+
+	read, err := io.Read(inp, 16)
+	if err != nil {
+		return
+	}
+
+	err = io.Write(opn, read)
+	return
+}
+
 func simFast(n, run int) (lps time.Duration, cnt []int, nmz []float32) {
 	n32 := uint32(n)
 	cnt = make([]int, 0)
@@ -126,9 +150,7 @@ func main() {
 	if e != nil {
 		if !os.IsNotExist(e) {
 			log.Fatal("Failed to create CPU profile", e)
-			// } else {
-			// 	log.Printf("Unable to create CPU profile: %v", e)
-		}
+		} // proceed if failed to create CPU profile
 	}
 	defer fcpu.Close()
 	if e == nil {
@@ -147,7 +169,22 @@ func main() {
 
 	switch cmd {
 	case "io":
-		log.Println("Usage: ./test io ***WIP")
+		var in, out string
+		switch len(os.Args) {
+		case 4:
+			out = os.Args[3]
+			fallthrough
+		case 3:
+			in = os.Args[2]
+		default:
+			log.Println("Usage: ./test io [in file path] [out file path]")
+			os.Exit(0)
+		}
+		err = inout(in, out)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	case "rand":
 		run := 1000000000 // 1,000,000,000
 		rng := 6
@@ -183,6 +220,7 @@ func main() {
 
 	case "traverse":
 		log.Println("Usage: ./test traverse ***WIP")
+
 	default:
 		log.Println("Usage: ./test [io|rand|traverse] {options...}")
 	}
@@ -192,9 +230,7 @@ func main() {
 	if e != nil {
 		if !os.IsNotExist(e) {
 			log.Fatal("Failed to create Memory profile", e)
-			// } else {
-			// 	log.Printf("Unable to create Memory profile: %v", e)
-		}
+		} // do not panic if failed to create CPU profile
 	}
 	defer fmem.Close()
 	if e == nil {

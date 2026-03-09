@@ -168,23 +168,18 @@ func BufferedRead(
 // Read read from the file of the given path. An empty path means to read from stdin. A chain of
 // decoders can be applied for encoded inputs.
 func Read(
-	filePath string,
+	in io.Reader,
 	bufferSize int,
 	decoders ...Decoder,
 ) (
 	data []byte,
 	err error,
 ) {
-	inp := os.Stdin
-	if filePath != "" {
-		inp, err = os.Open(filePath)
-		if err != nil {
-			err = fmt.Errorf("[READ] %v", err)
-			return
-		}
-		defer inp.Close()
+	if in == nil {
+		err = fmt.Errorf("reader not ready")
+		return
 	}
-	rdr := bufio.NewReaderSize(inp, bufferSize)
+	rdr := bufio.NewReaderSize(in, bufferSize)
 
 	dec := make([]Decoder, 0)
 	for _, n := range decoders { // filter out nil decoder inputs
@@ -224,21 +219,15 @@ func Read(
 // Write write to the file of the given path. An empty path means to write to stdout. A chain of
 // encoders can be applied to encode the data before writing to file.
 func Write(
-	filePath string,
+	out io.Writer,
 	data []byte,
 	encoders ...Encoder,
 ) (err error) {
-	var out *os.File
-	var wtr *bufio.Writer
-	if filePath != "" {
-		out, err = os.Create(filePath)
-		if err != nil {
-			err = fmt.Errorf("[WRITE] %v", err)
-			return
-		}
-		wtr = bufio.NewWriter(out)
-		defer out.Close()
+	if out == nil {
+		err = fmt.Errorf("writer not ready")
+		return
 	}
+	wtr := bufio.NewWriter(out)
 
 	enc := make([]Encoder, 0)
 	for _, n := range encoders { // filter out nil encoder inputs
@@ -247,12 +236,8 @@ func Write(
 		}
 	}
 	if len(enc) <= 0 {
-		if wtr == nil {
-			fmt.Printf("%s", data)
-		} else {
-			fmt.Fprintf(wtr, "%s", data)
-			wtr.Flush()
-		}
+		fmt.Fprintf(wtr, "%s", data)
+		wtr.Flush()
 	} else {
 		rdr := bytes.NewReader(data)
 		if wtr == nil {
