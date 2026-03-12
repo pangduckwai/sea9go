@@ -5,19 +5,24 @@ import (
 	"math"
 	"math/bits"
 	"testing"
-	"time"
 )
 
 var tESTS = []int64{
 	56,
+	345,
 	5678,
+	7890,
+	8900,
 	56789,
 	567890,
 	5678901,
 	56789012,
 	567890123,
+	2345678901,
 	56789012345,
+	234567890123,
 	56789012345678,
+	2345678901234567,
 	56789012345678901,
 	math.MaxInt64 - 3,
 }
@@ -101,58 +106,73 @@ func _decimal(i int64, dec int) (o int64) {
 	return
 }
 
-func __decimal(i int64, dec int) (o int64) {
-	neg := false
-	if i < 0 {
-		neg = true
-		i = -i
-	}
-	o = i
-	if i >= int64(hHLO_DEC[dec-1][2]) {
-		var q, r int64
-		qt, rt, ot := make([]int64, 0), make([]int64, 0), make([]uint64, 0)
-		for idx, hilo := range hHLO_DEC {
-			q, r = divmodDec(i, hilo)
-			if q <= 0 {
-				if rt[0] > int64(ot[0])>>1 {
-					o = qt[0] + 1
-				} else {
-					o = qt[0]
-				}
-				break
-			}
-			if idx < dec {
-				qt, rt, ot = append(qt, q), append(rt, r), append(ot, hilo[2])
-			} else {
-				qt, rt, ot = append(qt[1:], q), append(rt[1:], r), append(ot[1:], hilo[2])
-			}
-		}
-	}
-	if neg {
-		o = -o
-	}
-	return
-}
-
 func TestDeci(t *testing.T) {
 	for _, val := range tESTS {
-		fmt.Printf("TestDeci() %5v <- %v\n", __decimal(val, 4), val)
+		fmt.Printf("TestDeci() %5v <- %v\n", decimal(val, 4), val)
+	}
+}
+
+func _control(inp int64, dec int) string {
+	if inp < int64(hHLO_DEC[sUFFIX[0].i][2]) {
+		return fmt.Sprintf("%v", inp)
+	}
+	var rnd uint64 = 1
+	for j := 0; j < dec; j++ {
+		rnd *= 10
+	}
+	round := float64(rnd)
+	i := 1
+	for ; i < len(sUFFIX); i++ {
+		if (uint64(inp) / hHLO_DEC[sUFFIX[i].i][2]) <= 0 {
+			return fmt.Sprintf("%v %v", math.Round((float64(inp)/float64(hHLO_DEC[sUFFIX[i-1].i][2]))*round)/round, sUFFIX[i-1].s)
+		}
+	}
+	return fmt.Sprintf("%v %v", math.Round((float64(inp)/float64(hHLO_DEC[sUFFIX[i-1].i][2]))*round)/round, sUFFIX[i-1].s)
+}
+
+func TestControl(t *testing.T) {
+	for _, val := range tESTS {
+		fmt.Printf("TestControl() 3 %19v : %v\n", val, _control(val, 3))
 	}
 }
 
 func TestMetric(t *testing.T) {
-	// Metric
 	for _, val := range tESTS {
-		fmt.Printf("TestMetric() %19v : %v\n", val, Metric(val, 3))
+		fmt.Printf("TestMetric() 0 %19v : %v\n", val, Metric(val, 0))
 	}
 
-	now0 := time.Now()
-	for range 1000000 {
-		for _, val := range tESTS {
-			Metric(val, 1)
+	for _, val := range tESTS {
+		fmt.Printf("TestMetric() 3 %19v : %v\n", val, Metric(val, 3))
+	}
+}
+
+func TestMetrics(t *testing.T) {
+	var c, m string
+	for _, val := range tESTS {
+		c = _control(val, 0)
+		m = Metric(val, 0)
+		if c != m {
+			t.Fatalf("TestMetrics() 0 '%v' and '%v' mismatched", m, c)
 		}
 	}
-	fmt.Printf("TestMetric() elapsed: %v\n", time.Since(now0))
+
+	// for _, val := range tESTS {
+	// 	c = _control(val, 3)
+	// 	m = Metric(val, 3)
+	// 	if c != m {
+	// 		t.Fatalf("TestMetrics() 3 '%v' and '%v' mismatched", m, c)
+	// 	}
+	// }
+
+	// for _, val := range tESTS {
+	// 	c = _control(val, 5)
+	// 	m = Metric(val, 5)
+	// 	if c != m {
+	// 		t.Fatalf("TestMetrics() 5 '%v' and '%v' mismatched", m, c)
+	// 	}
+	// }
+
+	fmt.Println("TestMetrics() test successful")
 }
 
 func BenchmarkOnce3(b *testing.B) {
@@ -216,5 +236,21 @@ func BenchmarkTwice6(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		_decimal(tESTS[i%11], 6)
+	}
+}
+
+func BenchmarkControl(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		_control(tESTS[i%11], 3)
+	}
+}
+
+func BenchmarkMetric(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		Metric(tESTS[i%11], 3)
 	}
 }

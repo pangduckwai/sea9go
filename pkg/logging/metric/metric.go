@@ -95,8 +95,18 @@ func decimal(i int64, dec int) (o int64) {
 		i = -i
 	}
 	o = i
-	if i >= int64(hHLO_DEC[dec-1][2]) {
-		var q, r int64
+	var q, r int64
+	if dec < 1 {
+		for idx, hilo := range hHLO_DEC {
+			q, r = divmodDec(i, hilo)
+			if q <= 0 {
+				if r > int64(hHLO_DEC[idx][2]>>1) {
+					return 1 // round up
+				}
+				return -1 // round down
+			}
+		}
+	} else if i >= int64(hHLO_DEC[dec-1][2]) {
 		qt, rt, ot := make([]int64, 0), make([]int64, 0), make([]uint64, 0)
 		for idx, hilo := range hHLO_DEC {
 			q, r = divmodDec(i, hilo)
@@ -138,7 +148,12 @@ func Metric(inp int64, dec int) string {
 		qt, rt, st = q, r, s.s
 	}
 
-	// if dec > 0 {
-	return fmt.Sprintf("%v.%v %v", qt, decimal(rt, dec), st)
-	// }
+	if dec > 0 {
+		return fmt.Sprintf("%v.%v %v", qt, decimal(rt, dec), st)
+	}
+	up := decimal(rt, 0)
+	if up > 0 {
+		qt++
+	}
+	return fmt.Sprintf("%v %v", qt, st)
 }
