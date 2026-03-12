@@ -13,6 +13,7 @@ var tESTS = []int64{
 	5678,
 	7890,
 	8900,
+	9000,
 	56789,
 	567890,
 	5678901,
@@ -27,17 +28,18 @@ var tESTS = []int64{
 	math.MaxInt64 - 3,
 }
 
-func TestDev(t *testing.T) {
-	for _, val := range tESTS {
-		for idx, hilo := range hHLO_DEC {
-			q, _ := divmodDec(val, hilo)
-			if q <= 0 {
-				fmt.Printf("TestDev() [%2v] <- %v\n", idx, val)
-				break
-			}
-		}
-	}
-}
+// TestDev for development
+// func TestDev(t *testing.T) {
+// 	for _, val := range tESTS {
+// 		for idx, hilo := range hHLO_DEC {
+// 			q, _ := divmodDec(val, hilo)
+// 			if q <= 0 {
+// 				fmt.Printf("TestDev() [%2v] <- %v\n", idx, val)
+// 				break
+// 			}
+// 		}
+// 	}
+// }
 
 // divDec reference: https://github.com/bmkessler/fastdiv/
 func divDec(n int64, hilo []uint64) int64 {
@@ -79,6 +81,7 @@ func divDec(n int64, hilo []uint64) int64 {
 // 	return int64(rst)
 // }
 
+// _decimal uses division twice
 func _decimal(i int64, dec int) (o int64) {
 	neg := false
 	if i < 0 {
@@ -106,10 +109,33 @@ func _decimal(i int64, dec int) (o int64) {
 	return
 }
 
-func TestDeci(t *testing.T) {
+func TestDecimals(t *testing.T) {
 	for _, val := range tESTS {
-		fmt.Printf("TestDeci() %5v <- %v\n", decimal(val, 4), val)
+		c := _decimal(val, 1)
+		d := decimal(val, 1)
+		if c != d {
+			t.Fatalf("TestDecimals() 1 '%v' and '%v' mismatched", d, c)
+		}
 	}
+
+	for _, val := range tESTS {
+		c := _decimal(val, 4)
+		d := decimal(val, 4)
+		if c != d {
+			t.Fatalf("TestDecimals() 4 '%v' and '%v' mismatched", d, c)
+		}
+		fmt.Printf("TestDecimals() 4 %5v and %v matched\n", d, c)
+	}
+
+	for _, val := range tESTS {
+		c := _decimal(val, 7)
+		d := decimal(val, 7)
+		if c != d {
+			t.Fatalf("TestDecimals() 7 '%v' and '%v' mismatched", d, c)
+		}
+	}
+
+	fmt.Println("TestDecimals() test successful")
 }
 
 func _control(inp int64, dec int) string {
@@ -130,20 +156,26 @@ func _control(inp int64, dec int) string {
 	return fmt.Sprintf("%v %v", math.Round((float64(inp)/float64(hHLO_DEC[sUFFIX[i-1].i][2]))*round)/round, sUFFIX[i-1].s)
 }
 
-func TestControl(t *testing.T) {
-	for _, val := range tESTS {
-		fmt.Printf("TestControl() 3 %19v : %v\n", val, _control(val, 3))
-	}
-}
-
-func TestMetric(t *testing.T) {
-	for _, val := range tESTS {
-		fmt.Printf("TestMetric() 0 %19v : %v\n", val, Metric(val, 0))
+func _matched(s, c string) (m bool) {
+	if s == c {
+		return true
 	}
 
-	for _, val := range tESTS {
-		fmt.Printf("TestMetric() 3 %19v : %v\n", val, Metric(val, 3))
+	t := s[0 : len(s)-2]
+	i := len(t)
+loop:
+	for {
+		switch t[i-1] {
+		case '0':
+			i--
+		case '.':
+			fallthrough
+		default:
+			m = true
+			break loop
+		}
 	}
+	return
 }
 
 func TestMetrics(t *testing.T) {
@@ -156,21 +188,22 @@ func TestMetrics(t *testing.T) {
 		}
 	}
 
-	// for _, val := range tESTS {
-	// 	c = _control(val, 3)
-	// 	m = Metric(val, 3)
-	// 	if c != m {
-	// 		t.Fatalf("TestMetrics() 3 '%v' and '%v' mismatched", m, c)
-	// 	}
-	// }
+	for _, val := range tESTS {
+		c = _control(val, 3)
+		m = Metric(val, 3)
+		if !_matched(m, c) {
+			t.Fatalf("TestMetrics() 3 '%v' and '%v' mismatched", m, c)
+		}
+		fmt.Printf("TestMetrics() 3 %10v and %v matched\n", m, c)
+	}
 
-	// for _, val := range tESTS {
-	// 	c = _control(val, 5)
-	// 	m = Metric(val, 5)
-	// 	if c != m {
-	// 		t.Fatalf("TestMetrics() 5 '%v' and '%v' mismatched", m, c)
-	// 	}
-	// }
+	for _, val := range tESTS {
+		c = _control(val, 5)
+		m = Metric(val, 5)
+		if !_matched(m, c) {
+			t.Fatalf("TestMetrics() 5 '%v' and '%v' mismatched", m, c)
+		}
+	}
 
 	fmt.Println("TestMetrics() test successful")
 }
@@ -180,6 +213,7 @@ func BenchmarkOnce3(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		decimal(tESTS[i%11], 3)
+		i++
 	}
 }
 
@@ -188,6 +222,7 @@ func BenchmarkOnce4(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		decimal(tESTS[i%11], 4)
+		i++
 	}
 }
 
@@ -196,6 +231,7 @@ func BenchmarkTwice3(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		_decimal(tESTS[i%11], 3)
+		i++
 	}
 }
 
@@ -204,6 +240,7 @@ func BenchmarkTwice4(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		_decimal(tESTS[i%11], 4)
+		i++
 	}
 }
 
@@ -212,6 +249,7 @@ func BenchmarkOnce5(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		decimal(tESTS[i%11], 5)
+		i++
 	}
 }
 
@@ -220,6 +258,7 @@ func BenchmarkOnce6(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		decimal(tESTS[i%11], 6)
+		i++
 	}
 }
 
@@ -228,6 +267,7 @@ func BenchmarkTwice5(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		_decimal(tESTS[i%11], 5)
+		i++
 	}
 }
 
@@ -236,21 +276,42 @@ func BenchmarkTwice6(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		_decimal(tESTS[i%11], 6)
+		i++
 	}
 }
 
-func BenchmarkControl(b *testing.B) {
+func BenchmarkControl3(b *testing.B) {
 	b.ResetTimer()
 	i := 0
 	for b.Loop() {
 		_control(tESTS[i%11], 3)
+		i++
 	}
 }
 
-func BenchmarkMetric(b *testing.B) {
+func BenchmarkMetric3(b *testing.B) {
 	b.ResetTimer()
 	i := 0
 	for b.Loop() {
 		Metric(tESTS[i%11], 3)
+		i++
+	}
+}
+
+func BenchmarkControl7(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		_control(tESTS[i%11], 7)
+		i++
+	}
+}
+
+func BenchmarkMetric7(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		Metric(tESTS[i%11], 7)
+		i++
 	}
 }

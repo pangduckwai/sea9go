@@ -3,6 +3,8 @@ package metric
 import (
 	"fmt"
 	"math/bits"
+
+	"github.com/pangduckwai/sea9go/pkg/logging"
 )
 
 // hHLO_DEC to generate the hi/lo values for dividing by 10^x:
@@ -88,72 +90,71 @@ func divmodDec(n int64, hilo []uint64) (q, r int64) {
 }
 
 // decimal round off the remainder
-func decimal(i int64, dec int) (o int64) {
+func decimal(i int64, dec int) (q int64) {
 	neg := false
 	if i < 0 {
 		neg = true
 		i = -i
 	}
-	o = i
-	var q, r int64
+	q = i
+	var r int64
+	idx := logging.DigitCount(uint64(i)) - 1
 	if dec < 1 {
-		for idx, hilo := range hHLO_DEC {
-			q, r = divmodDec(i, hilo)
-			if q <= 0 {
-				if r > int64(hHLO_DEC[idx][2]>>1) {
-					return 1 // round up
-				}
-				return -1 // round down
-			}
+		q, r = divmodDec(i, hHLO_DEC[idx])
+		if r > int64(hHLO_DEC[idx][2]>>1) {
+			return 1 // round up
 		}
-	} else if i >= int64(hHLO_DEC[dec-1][2]) {
-		qt, rt, ot := make([]int64, 0), make([]int64, 0), make([]uint64, 0)
-		for idx, hilo := range hHLO_DEC {
-			q, r = divmodDec(i, hilo)
-			if q <= 0 {
-				if rt[0] > int64(ot[0])>>1 {
-					o = qt[0] + 1
-				} else {
-					o = qt[0]
-				}
-				break
-			}
-			if idx < dec {
-				qt, rt, ot = append(qt, q), append(rt, r), append(ot, hilo[2])
-			} else {
-				qt, rt, ot = append(qt[1:], q), append(rt[1:], r), append(ot[1:], hilo[2])
-			}
+		return -1 // round down
+	}
+	if idx >= dec {
+		q, r = divmodDec(i, hHLO_DEC[idx-dec])
+		if r > int64(hHLO_DEC[idx-dec][2]>>1) {
+			q++
 		}
 	}
 	if neg {
-		o = -o
+		q = -q
 	}
 	return
 }
 
 // Metric convert input to metric suffix with the given decimal places.
 func Metric(inp int64, dec int) string {
-	if inp < int64(hHLO_DEC[sUFFIX[0].i][2]) {
+	neg := false
+	if inp < 0 {
+		neg = true
+		inp = -inp
+	}
+
+	i, k := logging.DigitCount(uint64(inp))-2, len(sUFFIX)-1
+	if i < sUFFIX[0].i {
+		if neg {
+			return fmt.Sprintf("-%v", inp)
+		}
 		return fmt.Sprintf("%v", inp)
 	}
 
 	var q, r int64
-	var st string = sUFFIX[0].s
-	qt, rt := divmodDec(inp, hHLO_DEC[sUFFIX[0].i])
-	for _, s := range sUFFIX[1:] {
-		q, r = divmodDec(inp, hHLO_DEC[s.i])
-		if q <= 0 {
-			break
+	for j, s := range sUFFIX[1:] {
+		if i < s.i {
+			q, r = divmodDec(inp, hHLO_DEC[sUFFIX[j].i])
+			if dec > 0 {
+				return fmt.Sprintf("%v.%v %v", q, decimal(r, dec), sUFFIX[j].s)
+			}
+			ru := decimal(r, 0)
+			if ru > 0 {
+				q++
+			}
+			return fmt.Sprintf("%v %v", q, sUFFIX[j].s)
 		}
-		qt, rt, st = q, r, s.s
 	}
-
+	q, r = divmodDec(inp, hHLO_DEC[sUFFIX[k].i])
 	if dec > 0 {
-		return fmt.Sprintf("%v.%v %v", qt, decimal(rt, dec), st)
+		return fmt.Sprintf("%v.%v %v", q, decimal(r, dec), sUFFIX[k].s)
 	}
-	up := decimal(rt, 0)
-	if up > 0 {
-		qt++
+	ru := decimal(r, 0)
+	if ru > 0 {
+		q++
 	}
-	return fmt.Sprintf("%v %v", qt, st)
+	return fmt.Sprintf("%v %v", q, sUFFIX[k].s)
 }
