@@ -1,4 +1,4 @@
-package logging
+package logger
 
 // DigitCount count the number of digits of the given number
 // reference: https://github.com/doloopwhile/go-fastlog

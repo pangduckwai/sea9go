@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/bits"
 
-	"github.com/pangduckwai/sea9go/pkg/logging"
+	logging "github.com/pangduckwai/sea9go/pkg/logger"
 )
 
 // hHLO_DEC to generate the hi/lo values for dividing by 10^x:

@@ -1,4 +1,4 @@
-package logging
+package logger
 
 import (
 	"fmt"
@@ -35,5 +35,23 @@ func BenchmarkLog10(b *testing.B) {
 	for b.Loop() {
 		_ = int(math.Log10(float64(vals[i%9]))) + 1
 		i++
+	}
+}
+
+func TestLogger(t *testing.T) {
+	lbls := []string{"this", "is", "a", "test!!!"}
+	msgs := []string{"How", "are", "you", "today", "?"}
+	log, err, _ := Init()
+
+	log1 := AddPrefix(AddPrefix(log, "TestLogger() - "), lbls...)
+	for _, m := range msgs {
+		log1(" ==> %v\n", m)
+	}
+
+	loge, _ := AddLabels(AddPrefix(err, "TestLogger() - "), 1, 7, 0, 5, 2, 2)
+	for i, l := range lbls {
+		for j, m := range msgs {
+			loge(" ==> IDX:%v\n", l, m, i, j)
+		}
 	}
 }
