@@ -44,15 +44,15 @@ func inout(in, out string) (err error) {
 	return
 }
 
-func simFast(n, run int) (lps time.Duration, cnt []int, nmz []float32) {
-	n32 := uint32(n)
+func simDirect(n, run int) (lps time.Duration, cnt []int, nmz []float32) {
+	o := uint32(n)
 	cnt = make([]int, 0)
 	for range n {
 		cnt = append(cnt, 0)
 	}
 	now := time.Now()
 	for range run {
-		cnt[int(fastrand.Uint32n(n32))] += 1
+		cnt[fastrand.Uint32n(o)] += 1
 	}
 	lps = time.Since(now)
 	nmz = make([]float32, 0)
@@ -80,14 +80,15 @@ func simCtrl(n, run int) (lps time.Duration, cnt []int, nmz []float32) {
 }
 
 func simIface(id, n, run int) (lps time.Duration, cnt []int, nmz []float32) {
-	var rnd rand.Rand = rand.RandFast(id)
+	o := uint32(n)
+	var rnd rand.Rand = rand.New(id)
 	cnt = make([]int, 0)
 	for range n {
 		cnt = append(cnt, 0)
 	}
 	now := time.Now()
 	for range run {
-		cnt[rnd.Intn(n)] += 1
+		cnt[rnd.Uint32n(o)] += 1
 	}
 	lps = time.Since(now)
 	nmz = make([]float32, 0)
@@ -97,15 +98,16 @@ func simIface(id, n, run int) (lps time.Duration, cnt []int, nmz []float32) {
 	return
 }
 
-func simDirect(id, n, run int) (lps time.Duration, cnt []int, nmz []float32) {
-	var rnd rand.RandFast = rand.RandFast(id)
+func simStru(id, n, run int) (lps time.Duration, cnt []int, nmz []float32) {
+	o := uint32(n)
+	rnd := rand.Temp(id)
 	cnt = make([]int, 0)
 	for range n {
 		cnt = append(cnt, 0)
 	}
 	now := time.Now()
 	for range run {
-		cnt[rnd.Intn(n)] += 1
+		cnt[rnd.Uint32n(o)] += 1
 	}
 	lps = time.Since(now)
 	nmz = make([]float32, 0)
@@ -128,18 +130,18 @@ func random(typ, run, rng int) {
 		fmt.Println("sea9go test rand iface")
 		lps, cnt, nmz = simIface(1, rng, run)
 	case 2:
-		fmt.Println("sea9go test rand direct")
-		lps, cnt, nmz = simDirect(1, rng, run)
+		fmt.Println("sea9go test rand stru")
+		lps, cnt, nmz = simStru(1, rng, run)
 	case 3:
-		fmt.Println("sea9go test rand fast")
-		lps, cnt, nmz = simFast(rng, run)
+		fmt.Println("sea9go test rand direct")
+		lps, cnt, nmz = simDirect(rng, run)
 	}
 
 	var buf strings.Builder
 	for i, v := range cnt {
 		fmt.Fprintf(&buf, " %3v: %v (%.4f%%)\n", i, v, nmz[i]*100)
 	}
-	fmt.Printf(" %v simulations with [0,%v) range, elapsed time: %12v (%v per op)\n%v", run, rng, lps, lps/time.Duration(run), buf.String())
+	fmt.Printf(" %v simulations with [0,%v) range, elapsed time: %12v (%.4fns per op)\n%v", run, rng, lps, float64(lps)/float64(run), buf.String())
 }
 
 func main() {
@@ -186,7 +188,7 @@ func main() {
 		}
 
 	case "rand":
-		run := 1000000000 // 1,000,000,000
+		run := 10000000000 // 10,000,000,000
 		rng := 6
 		typ := 0
 		switch len(os.Args) {
@@ -204,18 +206,29 @@ func main() {
 			fallthrough
 		case 3:
 			switch os.Args[2] {
+			case "all":
+				typ = -1
 			case "iface":
 				typ = 1
-			case "direct":
+			case "stru":
 				typ = 2
-			case "fast":
+			case "direct":
 				typ = 3
 			}
 			fallthrough
 		case 2:
-			random(typ, run, rng)
+			if typ >= 0 {
+				random(typ, run, rng)
+			} else {
+				run = 1000000000 // 1,000,000,000
+				idcs := fastrand.Perm(3)
+				random(0, run, rng)
+				for _, idx := range idcs {
+					random(idx+1, run, rng)
+				}
+			}
 		default:
-			log.Println("Usage: ./test rand [ctrl|iface|direct|fast] [range] [num-of-runs]")
+			log.Println("Usage: ./test rand [ctrl|iface|stru|direct|all] [range] [num-of-runs]")
 		}
 
 	case "traverse":

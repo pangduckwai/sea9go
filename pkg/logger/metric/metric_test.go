@@ -226,24 +226,6 @@ func BenchmarkOnce4(b *testing.B) {
 	}
 }
 
-func BenchmarkTwice3(b *testing.B) {
-	b.ResetTimer()
-	i := 0
-	for b.Loop() {
-		_decimal(tESTS[i%11], 3)
-		i++
-	}
-}
-
-func BenchmarkTwice4(b *testing.B) {
-	b.ResetTimer()
-	i := 0
-	for b.Loop() {
-		_decimal(tESTS[i%11], 4)
-		i++
-	}
-}
-
 func BenchmarkOnce5(b *testing.B) {
 	b.ResetTimer()
 	i := 0
@@ -258,6 +240,24 @@ func BenchmarkOnce6(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		decimal(tESTS[i%11], 6)
+		i++
+	}
+}
+
+func BenchmarkTwice3(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		_decimal(tESTS[i%11], 3)
+		i++
+	}
+}
+
+func BenchmarkTwice4(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		_decimal(tESTS[i%11], 4)
 		i++
 	}
 }

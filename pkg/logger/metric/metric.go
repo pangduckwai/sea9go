@@ -49,6 +49,7 @@ var hHLO_DEC = [][]uint64{
 	{1, 15581492618384294731, 10000000000000000000},
 }
 
+// sUFFIX list of metric suffices of values can be fit into an int64
 var sUFFIX = []struct {
 	s string
 	i int

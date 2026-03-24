@@ -9,14 +9,14 @@ import (
 var vals = []uint64{345, 90000, 2, 567890, 1, 1232345, math.MaxUint64, 34958769857, 5678}
 
 func TestDigits(t *testing.T) {
+	var ctrl, dcnt int
 	for _, val := range vals {
-		fmt.Printf("TestDigits() %14v -> %v\n", val, DigitCount(val))
-	}
-}
-
-func TestLog10(t *testing.T) {
-	for _, val := range vals {
-		fmt.Printf("TestLog10()   %14v -> %v / %v\n", val, int(math.Log10(float64(val)))+1, DigitCount(val))
+		ctrl = int(math.Log10(float64(val))) + 1
+		dcnt = DigitCount(val)
+		if dcnt != ctrl {
+			t.Fatalf("TestDigits() %20v -> %2v != %v\n", val, dcnt, ctrl)
+		}
+		fmt.Printf("TestDigits() %20v -> %2v == %v\n", val, dcnt, ctrl)
 	}
 }
 

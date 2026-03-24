@@ -23,28 +23,40 @@ type Rand interface {
 	// Uint64 returns a pseudo-random 64-bit value as a uint64.
 	Uint64() uint64
 
-	// Intn returns, as an int, a non-negative pseudo-random number in [0,n). It panics if n <= 0.
-	Intn(int) int
+	// Uint32n returns, as an uint32, a non-negative pseudo-random number in [0,n). It panics if n <= 0.
+	Uint32n(uint32) uint32
 
 	// Perm returns, as a slice of n ints, a pseudo-random permutation of the integers in the half-open interval [0,n).
 	Perm(int) []int
+
+	// Intn returns, as an int, a non-negative pseudo-random number in [0,n). It panics if n <= 0.
+	Intn(int) int
 }
 
-// RandFast uses bytedance's `fastrand`
-type RandFast uint8
+// randFast uses bytedance's `fastrand`
+type randFast uint8
 
-func New(id int) RandFast {
-	return RandFast(id)
+func New(id int) Rand {
+	return randFast(id)
 }
 
-func (m RandFast) Uint64() uint64 {
+// Temp return the struct instead of the interface for testing
+func Temp(id int) randFast {
+	return randFast(id)
+}
+
+func (m randFast) Uint64() uint64 {
 	return fastrand.Uint64()
 }
 
-func (m RandFast) Intn(n int) int {
-	return int(fastrand.Uint32n(uint32(n)))
+func (m randFast) Uint32n(n uint32) uint32 {
+	return fastrand.Uint32n(n)
 }
 
-func (m RandFast) Perm(n int) []int {
+func (m randFast) Perm(n int) []int {
 	return fastrand.Perm(n)
+}
+
+func (m randFast) Intn(n int) int {
+	return int(fastrand.Uint32n(uint32(n)))
 }
