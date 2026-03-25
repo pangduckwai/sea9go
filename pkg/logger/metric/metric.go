@@ -7,7 +7,7 @@ import (
 	logging "github.com/pangduckwai/sea9go/pkg/logger"
 )
 
-// hHLO_DEC to generate the hi/lo values for dividing by 10^x:
+// hILO_DEC to generate the hi/lo values for dividing by 10^x:
 //
 //	const oVER float64 = float64(math.MaxUint64) / float64(10)
 //	var a, h, l, r, c uint64
@@ -27,7 +27,7 @@ import (
 //		}
 //	}
 //	fmt.Println("}")
-var hHLO_DEC = [][]uint64{
+var hILO_DEC = [][]uint64{
 	{1844674407370955161, 11068046444225730970, 10},
 	{184467440737095516, 2951479051793528259, 100},
 	{18446744073709551, 11363194349405083796, 1000}, // k 10^3
@@ -64,11 +64,6 @@ var sUFFIX = []struct {
 
 // divmodDec reference: https://github.com/bmkessler/fastdiv/
 func divmodDec(n int64, hilo []uint64) (q, r int64) {
-	neg := false
-	if n < 0 {
-		n = -n
-		neg = true
-	}
 	u := uint64(n)
 
 	d1, lo := bits.Mul64(hilo[1], u)
@@ -82,80 +77,100 @@ func divmodDec(n int64, hilo []uint64) (q, r int64) {
 	_, c = bits.Add64(m1, m2, 0)
 	mod, _ = bits.Add64(mod, 0, c)
 	r = int64(mod)
-
-	if neg {
-		q = -q
-		r = -r
-	}
 	return
+}
+
+// divDec reference: https://github.com/bmkessler/fastdiv/
+func divDec(n int64, hilo []uint64) int64 {
+	l1, _ := bits.Mul64(hilo[1], uint64(n))
+	rst, l2 := bits.Mul64(hilo[0], uint64(n))
+	_, c := bits.Add64(l1, l2, 0)
+	rst, _ = bits.Add64(rst, 0, c)
+	return int64(rst)
+}
+
+// modDec reference: https://github.com/bmkessler/fastdiv/
+func modDec(n int64, hilo []uint64) int64 {
+	hi, lo := bits.Mul64(hilo[1], uint64(n))
+	hi += hilo[0] * uint64(n)
+	l1, _ := bits.Mul64(lo, hilo[2])
+	rst, l2 := bits.Mul64(hi, hilo[2])
+	_, c := bits.Add64(l1, l2, 0)
+	rst, _ = bits.Add64(rst, 0, c)
+	return int64(rst)
 }
 
 // decimal round off the remainder
 func decimal(i int64, dec int) (q int64) {
-	neg := false
-	if i < 0 {
-		neg = true
-		i = -i
-	}
 	q = i
 	var r int64
 	idx := logging.DigitCount(uint64(i)) - 1
-	if dec < 1 {
-		q, r = divmodDec(i, hHLO_DEC[idx])
-		if r > int64(hHLO_DEC[idx][2]>>1) {
-			return 1 // round up
-		}
-		return -1 // round down
-	}
 	if idx >= dec {
-		q, r = divmodDec(i, hHLO_DEC[idx-dec])
-		if r > int64(hHLO_DEC[idx-dec][2]>>1) {
+		q, r = divmodDec(i, hILO_DEC[idx-dec])
+		if r > int64(hILO_DEC[idx-dec][2]>>1) {
 			q++
 		}
 	}
-	if neg {
-		q = -q
-	}
+
+	// idx = logging.DigitCount(uint64(q)) - 2
+	// for ; idx >= 0; idx-- {
+	// 	p := divDec(q, hILO_DEC[idx])
+	// 	if q == p*int64(hILO_DEC[idx][2]) {
+	// 		return p
+	// 	}
+	// }
 	return
+}
+
+// round decide if the given value >= 5xx...
+func round(i int64) int64 {
+	idx := logging.DigitCount(uint64(i)) - 1
+	r := modDec(i, hILO_DEC[idx])
+	if r > int64(hILO_DEC[idx][2]>>1) {
+		return 1 // round up
+	}
+	return 0 // round down
+}
+
+func __metric(inp int64, dec, idx int) string {
+	q, r := divmodDec(inp, hILO_DEC[sUFFIX[idx].i])
+	if dec > 0 {
+		if r > 0 {
+			return fmt.Sprintf("%v.%v %v", q, decimal(r, dec), sUFFIX[idx].s)
+		}
+		return fmt.Sprintf("%v %v", q, sUFFIX[idx].s)
+	}
+	q += round(r)
+	return fmt.Sprintf("%v %v", q, sUFFIX[idx].s)
+}
+
+func _metric(inp int64, dec int) string {
+	i, k := logging.DigitCount(uint64(inp))-2, len(sUFFIX)-1
+	if i < sUFFIX[0].i {
+		return fmt.Sprintf("%v", inp)
+	}
+
+	for j, s := range sUFFIX[1:] {
+		if i < s.i {
+			return __metric(inp, dec, j)
+		}
+	}
+	return __metric(inp, dec, k)
 }
 
 // Metric convert input to metric suffix with the given decimal places.
 func Metric(inp int64, dec int) string {
-	neg := false
+	if dec < 0 {
+		panic("No. of decimal points cannot be negative")
+	}
+
+	neg := ""
 	if inp < 0 {
-		neg = true
+		neg = "-"
 		inp = -inp
 	}
 
-	i, k := logging.DigitCount(uint64(inp))-2, len(sUFFIX)-1
-	if i < sUFFIX[0].i {
-		if neg {
-			return fmt.Sprintf("-%v", inp)
-		}
-		return fmt.Sprintf("%v", inp)
-	}
+	r := _metric(inp, dec)
 
-	var q, r int64
-	for j, s := range sUFFIX[1:] {
-		if i < s.i {
-			q, r = divmodDec(inp, hHLO_DEC[sUFFIX[j].i])
-			if dec > 0 {
-				return fmt.Sprintf("%v.%v %v", q, decimal(r, dec), sUFFIX[j].s)
-			}
-			ru := decimal(r, 0)
-			if ru > 0 {
-				q++
-			}
-			return fmt.Sprintf("%v %v", q, sUFFIX[j].s)
-		}
-	}
-	q, r = divmodDec(inp, hHLO_DEC[sUFFIX[k].i])
-	if dec > 0 {
-		return fmt.Sprintf("%v.%v %v", q, decimal(r, dec), sUFFIX[k].s)
-	}
-	ru := decimal(r, 0)
-	if ru > 0 {
-		q++
-	}
-	return fmt.Sprintf("%v %v", q, sUFFIX[k].s)
+	return fmt.Sprintf("%v%v", neg, r)
 }

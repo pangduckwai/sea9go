@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var vals = []uint64{345, 90000, 2, 567890, 1, 1232345, math.MaxUint64, 34958769857, 5678}
+var vals = []uint64{345, 90000, 21, 567890, 1, 1232345, math.MaxUint64, 34958769857, 5678}
 
 func TestDigits(t *testing.T) {
 	var ctrl, dcnt int
