@@ -12,37 +12,8 @@ import (
 	"time"
 
 	"github.com/bytedance/gopkg/lang/fastrand"
-	"github.com/pangduckwai/sea9go/pkg/io"
 	"github.com/pangduckwai/sea9go/pkg/rand"
 )
-
-func inout(in, out string) (err error) {
-	inp := os.Stdin
-	if in != "" {
-		inp, err = os.Open(in)
-		if err != nil {
-			return
-		}
-		defer inp.Close()
-	}
-
-	opn := os.Stdout
-	if out != "" {
-		opn, err = os.Create(out)
-		if err != nil {
-			return
-		}
-		defer opn.Close()
-	}
-
-	read, err := io.Read(inp, 16)
-	if err != nil {
-		return
-	}
-
-	err = io.Write(opn, read)
-	return
-}
 
 func simDirect(n, run int) (lps time.Duration, cnt []int, nmz []float32) {
 	o := uint32(n)
@@ -124,16 +95,16 @@ func random(typ, run, rng int) {
 
 	switch typ {
 	case 0:
-		fmt.Println("sea9go test rand control")
+		fmt.Println("sea9go rand control")
 		lps, cnt, nmz = simCtrl(rng, run)
 	case 1:
-		fmt.Println("sea9go test rand iface")
+		fmt.Println("sea9go rand iface")
 		lps, cnt, nmz = simIface(1, rng, run)
 	case 2:
-		fmt.Println("sea9go test rand stru")
+		fmt.Println("sea9go rand stru")
 		lps, cnt, nmz = simStru(1, rng, run)
 	case 3:
-		fmt.Println("sea9go test rand direct")
+		fmt.Println("sea9go rand direct")
 		lps, cnt, nmz = simDirect(rng, run)
 	}
 
@@ -164,78 +135,41 @@ func main() {
 	////////////////// pprof ///////////////////*/
 
 	var err error
-	var cmd string
-	if len(os.Args) > 1 {
-		cmd = os.Args[1]
-	}
-
-	switch cmd {
-	case "io":
-		var in, out string
-		switch len(os.Args) {
-		case 4:
-			out = os.Args[3]
-			fallthrough
-		case 3:
-			in = os.Args[2]
-		default:
-			log.Println("Usage: ./test io [in file path] [out file path]")
-			os.Exit(0)
-		}
-		err = inout(in, out)
+	run := 10000000000 // 10,000,000,000
+	rng := 6
+	switch len(os.Args) {
+	case 4:
+		run, err = strconv.Atoi(os.Args[3])
 		if err != nil {
 			log.Fatal(err)
 		}
-
-	case "rand":
-		run := 10000000000 // 10,000,000,000
-		rng := 6
-		typ := 0
-		switch len(os.Args) {
-		case 5:
-			run, err = strconv.Atoi(os.Args[4])
-			if err != nil {
-				log.Fatal(err)
-			}
-			fallthrough
-		case 4:
-			rng, err = strconv.Atoi(os.Args[3])
-			if err != nil {
-				log.Fatal(err)
-			}
-			fallthrough
-		case 3:
-			switch os.Args[2] {
-			case "all":
-				typ = -1
-			case "iface":
-				typ = 1
-			case "stru":
-				typ = 2
-			case "direct":
-				typ = 3
-			}
-			fallthrough
-		case 2:
-			if typ >= 0 {
-				random(typ, run, rng)
-			} else {
-				run = 1000000000 // 1,000,000,000
-				idcs := fastrand.Perm(3)
-				random(0, run, rng)
-				for _, idx := range idcs {
-					random(idx+1, run, rng)
-				}
-			}
-		default:
-			log.Println("Usage: ./test rand [ctrl|iface|stru|direct|all] [range] [num-of-runs]")
+		fallthrough
+	case 3:
+		rng, err = strconv.Atoi(os.Args[2])
+		if err != nil {
+			log.Fatal(err)
 		}
-
-	case "traverse":
-		log.Println("Usage: ./test traverse ***WIP")
-
+		fallthrough
+	case 2:
+		switch os.Args[1] {
+		case "all":
+			run = 1000000000 // 1,000,000,000
+			idcs := fastrand.Perm(3)
+			random(0, run, rng)
+			for _, idx := range idcs {
+				random(idx+1, run, rng)
+			}
+		case "iface":
+			random(1, run, rng)
+		case "stru":
+			random(2, run, rng)
+		case "direct":
+			random(3, run, rng)
+		default:
+			random(0, run, rng)
+		}
 	default:
-		log.Println("Usage: ./test [io|rand|traverse] {options...}")
+		log.Println("Usage: ./rand [ctrl|iface|stru|direct|all] [range] [num-of-runs]")
 	}
 
 	////////////////// pprof /////////////////////
