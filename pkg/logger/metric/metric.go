@@ -112,13 +112,13 @@ func decimal(i int64, dec int) (q int64) {
 		}
 	}
 
-	// idx = logging.DigitCount(uint64(q)) - 2
-	// for ; idx >= 0; idx-- {
-	// 	p := divDec(q, hILO_DEC[idx])
-	// 	if q == p*int64(hILO_DEC[idx][2]) {
-	// 		return p
-	// 	}
-	// }
+	idx = logging.DigitCount(uint64(q)) - 2
+	for ; idx >= 0; idx-- {
+		p := divDec(q, hILO_DEC[idx])
+		if q == p*int64(hILO_DEC[idx][2]) {
+			return p
+		}
+	}
 	return
 }
 
@@ -132,30 +132,16 @@ func round(i int64) int64 {
 	return 0 // round down
 }
 
-func __metric(inp int64, dec, idx int) string {
+func __metric(inp int64, dec, idx int) (int64, int64) {
 	q, r := divmodDec(inp, hILO_DEC[sUFFIX[idx].i])
 	if dec > 0 {
 		if r > 0 {
-			return fmt.Sprintf("%v.%v %v", q, decimal(r, dec), sUFFIX[idx].s)
+			return q, decimal(r, dec)
 		}
-		return fmt.Sprintf("%v %v", q, sUFFIX[idx].s)
+		return q, -1
 	}
 	q += round(r)
-	return fmt.Sprintf("%v %v", q, sUFFIX[idx].s)
-}
-
-func _metric(inp int64, dec int) string {
-	i, k := logging.DigitCount(uint64(inp))-2, len(sUFFIX)-1
-	if i < sUFFIX[0].i {
-		return fmt.Sprintf("%v", inp)
-	}
-
-	for j, s := range sUFFIX[1:] {
-		if i < s.i {
-			return __metric(inp, dec, j)
-		}
-	}
-	return __metric(inp, dec, k)
+	return q, -1
 }
 
 // Metric convert input to metric suffix with the given decimal places.
@@ -170,7 +156,24 @@ func Metric(inp int64, dec int) string {
 		inp = -inp
 	}
 
-	r := _metric(inp, dec)
+	i, k := logging.DigitCount(uint64(inp))-2, len(sUFFIX)-1
+	if i < sUFFIX[0].i {
+		return fmt.Sprintf("%v%v", neg, inp)
+	}
 
-	return fmt.Sprintf("%v%v", neg, r)
+	var q, r int64
+	for j, s := range sUFFIX[1:] {
+		if i < s.i {
+			q, r = __metric(inp, dec, j)
+			if r >= 0 {
+				return fmt.Sprintf("%v%v.%v %v", neg, q, r, sUFFIX[j].s)
+			}
+			return fmt.Sprintf("%v%v %v", neg, q, sUFFIX[j].s)
+		}
+	}
+	q, r = __metric(inp, dec, k)
+	if r >= 0 {
+		return fmt.Sprintf("%v%v.%v %v", neg, q, r, sUFFIX[k].s)
+	}
+	return fmt.Sprintf("%v%v %v", neg, q, sUFFIX[k].s)
 }
