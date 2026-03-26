@@ -2,6 +2,12 @@
 My golang utilities
 
 ## Packages
+### `http\client`
+- convinent wrapper of `http.Client`
+
+### `http\server`
+- wrapper of `http.Server` with start/stop/timeout handling
+
 ### `io`
 - buffered read from io.Reader
 - read from stdin
@@ -28,3 +34,6 @@ My golang utilities
 ## Changelog
 ### v0.1.0
 - First pre-release version
+
+### v0.2.0
+- Add http client and server
