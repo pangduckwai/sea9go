@@ -144,6 +144,14 @@ func __metric(inp int64, dec, idx int) (int64, int64) {
 	return q, -1
 }
 
+func _metric(neg string, inp int64, dec, idx int) string {
+	q, r := __metric(inp, dec, idx)
+	if r >= 0 {
+		return fmt.Sprintf("%v%v.%v %v", neg, q, r, sUFFIX[idx].s)
+	}
+	return fmt.Sprintf("%v%v %v", neg, q, sUFFIX[idx].s)
+}
+
 // Metric convert input to metric suffix with the given decimal places.
 func Metric(inp int64, dec int) string {
 	if dec < 0 {
@@ -161,19 +169,10 @@ func Metric(inp int64, dec int) string {
 		return fmt.Sprintf("%v%v", neg, inp)
 	}
 
-	var q, r int64
 	for j, s := range sUFFIX[1:] {
 		if i < s.i {
-			q, r = __metric(inp, dec, j)
-			if r >= 0 {
-				return fmt.Sprintf("%v%v.%v %v", neg, q, r, sUFFIX[j].s)
-			}
-			return fmt.Sprintf("%v%v %v", neg, q, sUFFIX[j].s)
+			return _metric(neg, inp, dec, j)
 		}
 	}
-	q, r = __metric(inp, dec, k)
-	if r >= 0 {
-		return fmt.Sprintf("%v%v.%v %v", neg, q, r, sUFFIX[k].s)
-	}
-	return fmt.Sprintf("%v%v %v", neg, q, sUFFIX[k].s)
+	return _metric(neg, inp, dec, k)
 }
