@@ -21,7 +21,7 @@ My golang utilities
 - convert values to metric suffix forms
 
 ### `rand`
-- fast pseudo random values generation
+- wrapper of fast pseudo random values generation
 
 ### `traverse`
 - traverse `map[string]any` structures (e.g. from json/yaml)
