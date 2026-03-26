@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	logging "github.com/pangduckwai/sea9go/pkg/logger"
+	"github.com/pangduckwai/sea9go/pkg/logger"
 )
 
 var tESTS = []int64{
@@ -68,7 +68,7 @@ func _decimal(i int64, dec int) (o int64) {
 		}
 	}
 
-	idx := logging.DigitCount(uint64(o)) - 2
+	idx := logger.DigitCount(uint64(o)) - 2
 	for ; idx >= 0; idx-- {
 		p := divDec(o, hILO_DEC[idx])
 		if o == p*int64(hILO_DEC[idx][2]) {

@@ -156,6 +156,22 @@ func main() {
 	}
 	////////////////// pprof ///////////////////*/
 
+	/////////////////////////////////////////////////////
+	// === About file sizes of the executable built ===
+	// Using cmd/metric as an example
+	//  1. Imported (TBA)
+	//
+	//  2. Imported with local replace
+	//   - Initial: 2,887,856 bytes
+	//   - Once:    2,949,152 bytes
+	//   - Twice:   2,953,216 bytes
+	//
+	//  3. Source code included
+	//   - Initial: 2,887,824 bytes
+	//   - Once:    2,949,104 bytes
+	//   - Twice:   2,957,280 bytes
+	/////////////////////////////////////////////////////
+
 	var err error
 	seed := uint64(time.Now().UnixNano())
 	run := 100000000 // 100,000,000
@@ -172,8 +188,8 @@ func main() {
 			if len(os.Args) < 3 {
 				run = 10000000 // 10,000,000
 			}
-			metricCtrl(run, seed)
-			metricSimu(run, seed)
+			metricCtrl(run, 1774499425614982000)
+			metricSimu(run, 1774499425614982000)
 		case "metric":
 			metricSimu(run, seed)
 		default:

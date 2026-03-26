@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/bits"
 
-	logging "github.com/pangduckwai/sea9go/pkg/logger"
+	"github.com/pangduckwai/sea9go/pkg/logger"
 )
 
 // hILO_DEC to generate the hi/lo values for dividing by 10^x:
@@ -104,7 +104,7 @@ func modDec(n int64, hilo []uint64) int64 {
 func decimal(i int64, dec int) (q int64) {
 	q = i
 	var r int64
-	idx := logging.DigitCount(uint64(i)) - 1
+	idx := logger.DigitCount(uint64(i)) - 1
 	if idx >= dec {
 		q, r = divmodDec(i, hILO_DEC[idx-dec])
 		if r > int64(hILO_DEC[idx-dec][2]>>1) {
@@ -112,7 +112,7 @@ func decimal(i int64, dec int) (q int64) {
 		}
 	}
 
-	idx = logging.DigitCount(uint64(q)) - 2
+	idx = logger.DigitCount(uint64(q)) - 2
 	for ; idx >= 0; idx-- {
 		p := divDec(q, hILO_DEC[idx])
 		if q == p*int64(hILO_DEC[idx][2]) {
@@ -124,7 +124,7 @@ func decimal(i int64, dec int) (q int64) {
 
 // round decide if the given value >= 5xx...
 func round(i int64) int64 {
-	idx := logging.DigitCount(uint64(i)) - 1
+	idx := logger.DigitCount(uint64(i)) - 1
 	r := modDec(i, hILO_DEC[idx])
 	if r > int64(hILO_DEC[idx][2]>>1) {
 		return 1 // round up
@@ -164,7 +164,7 @@ func Metric(inp int64, dec int) string {
 		inp = -inp
 	}
 
-	i, k := logging.DigitCount(uint64(inp))-2, len(sUFFIX)-1
+	i, k := logger.DigitCount(uint64(inp))-2, len(sUFFIX)-1
 	if i < sUFFIX[0].i {
 		return fmt.Sprintf("%v%v", neg, inp)
 	}
