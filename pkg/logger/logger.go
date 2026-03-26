@@ -9,27 +9,6 @@ import (
 
 const fRM_LOGF_MILLI = "2006-01-02T15:04:05.000"
 
-const mASK_ERR uint8 = 1  // 0000 0001
-const mASK_EXIT uint8 = 2 // 0000 0010
-
-// _log write log to console
-// arguments:
-// - ctrl: flow control: x0 - write to stdout; x1 - write to stderr; 1x write to stderr and exit(1)
-func _log(
-	ctrl uint8, // flow control: 00 - write to stdout; 01 - write to stderr; 1x - exit(1)
-	frm string, // format string
-	a ...any, // values to plug into the format string
-) {
-	if ctrl&mASK_ERR > 0 {
-		fmt.Fprintf(os.Stderr, fmt.Sprintf("%v %v", time.Now().Format(fRM_LOGF_MILLI), frm), a...)
-	} else {
-		fmt.Printf(fmt.Sprintf("%v %v", time.Now().Format(fRM_LOGF_MILLI), frm), a...)
-	}
-	if ctrl&mASK_EXIT > 0 {
-		os.Exit(1)
-	}
-}
-
 // Init initialize base loggers.
 // - log   : base logger to stdout
 // - err   : base logger to stderr
@@ -38,13 +17,14 @@ func Init() (
 	log, err, fatal func(string, ...any),
 ) {
 	log = func(frm string, a ...any) {
-		_log(0, frm, a...)
+		fmt.Printf(fmt.Sprintf("%v %v", time.Now().Format(fRM_LOGF_MILLI), frm), a...)
 	}
 	err = func(frm string, a ...any) {
-		_log(1, frm, a...)
+		fmt.Fprintf(os.Stderr, fmt.Sprintf("%v %v", time.Now().Format(fRM_LOGF_MILLI), frm), a...)
 	}
 	fatal = func(frm string, a ...any) {
-		_log(3, frm, a...)
+		fmt.Fprintf(os.Stderr, fmt.Sprintf("%v %v\n", time.Now().Format(fRM_LOGF_MILLI), frm), a...)
+		os.Exit(1)
 	}
 	return
 }
