@@ -79,7 +79,7 @@ var tESTS = []int64{
 	math.MaxInt64 - 3,
 }
 
-func metricCtrl(inp int64, dec int) string {
+func _metricCtrl(inp int64, dec int) string {
 	neg := ""
 	if inp < 0 {
 		neg = "-"
@@ -103,6 +103,21 @@ func metricCtrl(inp int64, dec int) string {
 	return fmt.Sprintf("%v%v %v", neg, math.Round((float64(inp)/float64(hILO_DEC[sUFFIX[i-1].i][2]))*round)/round, sUFFIX[i-1].s)
 }
 
+func metricCtrl(run int) {
+	fmt.Println("sea9go metric control")
+	var lps time.Duration
+	var n uint32 = uint32(len(tESTS))
+	now := time.Now()
+	for range run {
+		// idx := fastrand.Uint32n(n)
+		// dec := int(fastrand.Uint32n(7)) + 3
+		// log.Printf(" Control(%20v, %v) -> %16v\n", tESTS[idx], dec, _metricCtrl(tESTS[idx], dec))
+		_metricCtrl(tESTS[fastrand.Uint32n(n)], int(fastrand.Uint32n(7))+3)
+	}
+	lps = time.Since(now)
+	fmt.Printf(" %v simulations elapsed time: %12v (%.4fns per op)\n", run, lps, float64(lps)/float64(run))
+}
+
 func metricSimu(run int) {
 	fmt.Println("sea9go metric")
 	var lps time.Duration
@@ -111,8 +126,7 @@ func metricSimu(run int) {
 	for range run {
 		// idx := fastrand.Uint32n(n)
 		// dec := int(fastrand.Uint32n(7)) + 3
-		// tmp := metric.Metric(tESTS[idx], dec)
-		// log.Printf(" Metric(%20v, %v) -> %16v\n", tESTS[idx], dec, tmp)
+		// log.Printf(" Metric(%20v, %v) -> %16v\n", tESTS[idx], dec, metric.Metric(tESTS[idx], dec))
 		metric.Metric(tESTS[fastrand.Uint32n(n)], int(fastrand.Uint32n(7))+3) // decmial point range 3 to 9
 	}
 	lps = time.Since(now)
@@ -150,11 +164,13 @@ func main() {
 	case 2:
 		switch os.Args[1] {
 		case "all":
-			log.Println("WIP: all")
+			run = 10000000 // 10,000,000
+			metricCtrl(run)
+			metricSimu(run)
 		case "metric":
 			metricSimu(run)
 		default:
-			log.Println("WIP: control")
+			metricCtrl(run)
 		}
 	default:
 		log.Println("Usage: ./metric [ctrl|metric|all] [num-of-runs]")
