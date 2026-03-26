@@ -78,29 +78,6 @@ func _decimal(i int64, dec int) (o int64) {
 	return
 }
 
-// func _matched(si, c int64) (m bool) {
-// 	if si == c {
-// 		return true
-// 	}
-
-// 	s := fmt.Sprintf("%v", si)
-// 	t := s[0 : len(s)-2]
-// 	i := len(t)
-// loop:
-// 	for {
-// 		switch t[i-1] {
-// 		case '0':
-// 			i--
-// 		case '.':
-// 			fallthrough
-// 		default:
-// 			m = true
-// 			break loop
-// 		}
-// 	}
-// 	return
-// }
-
 func TestDecimals(t *testing.T) {
 	for _, val := range tESTS[8:] {
 		c := _decimal(val, 1)
@@ -108,6 +85,7 @@ func TestDecimals(t *testing.T) {
 		if c != d {
 			t.Fatalf("TestDecimals() 1 '%v' and '%v' mismatched", d, c)
 		}
+		// fmt.Printf("TestDecimals() 1 %5v and %v matched\n", d, c)
 	}
 
 	for _, val := range tESTS[8:] {
@@ -125,6 +103,7 @@ func TestDecimals(t *testing.T) {
 		if c != d {
 			t.Fatalf("TestDecimals() 7 '%v' and '%v' mismatched", d, c)
 		}
+		fmt.Printf("TestDecimals() 7 %5v and %v matched\n", d, c)
 	}
 
 	fmt.Println("TestDecimals() test successful")
@@ -180,7 +159,7 @@ func TestMetrics(t *testing.T) {
 		if c != m {
 			t.Fatalf("TestMetrics() 5 '%v' and '%v' mismatched", m, c)
 		}
-		// fmt.Printf("TestMetrics() 5 %19v -> %11v and %11v matched\n", val, m, c)
+		fmt.Printf("TestMetrics() 5 %19v -> %11v and %11v matched\n", val, m, c)
 	}
 
 	fmt.Println("TestMetrics() test successful")

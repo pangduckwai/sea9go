@@ -153,7 +153,9 @@ func main() {
 	case 2:
 		switch os.Args[1] {
 		case "all":
-			run = 1000000000 // 1,000,000,000
+			if len(os.Args) < 4 {
+				run = 1000000000 // 1,000,000,000
+			}
 			idcs := fastrand.Perm(3)
 			random(0, run, rng)
 			for _, idx := range idcs {

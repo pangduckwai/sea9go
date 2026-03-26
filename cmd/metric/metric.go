@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	v2 "math/rand/v2"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,7 +12,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bytedance/gopkg/lang/fastrand"
 	"github.com/pangduckwai/sea9go/pkg/logger/metric"
 )
 
@@ -103,31 +103,35 @@ func _metricCtrl(inp int64, dec int) string {
 	return fmt.Sprintf("%v%v %v", neg, math.Round((float64(inp)/float64(hILO_DEC[sUFFIX[i-1].i][2]))*round)/round, sUFFIX[i-1].s)
 }
 
-func metricCtrl(run int) {
+func metricCtrl(run int, seed uint64) {
 	fmt.Println("sea9go metric control")
 	var lps time.Duration
 	var n uint32 = uint32(len(tESTS))
+	rnd := v2.New(v2.NewPCG(seed, seed+2))
 	now := time.Now()
 	for range run {
-		// idx := fastrand.Uint32n(n)
-		// dec := int(fastrand.Uint32n(7)) + 3
+		// idx := rnd.Uint32N(n)
+		// dec := int(rnd.Uint32N(7)) + 3
 		// log.Printf(" Control(%20v, %v) -> %16v\n", tESTS[idx], dec, _metricCtrl(tESTS[idx], dec))
-		_metricCtrl(tESTS[fastrand.Uint32n(n)], int(fastrand.Uint32n(7))+3)
+
+		_metricCtrl(tESTS[rnd.Uint32N(n)], int(rnd.Uint32N(7))+3)
 	}
 	lps = time.Since(now)
 	fmt.Printf(" %v simulations elapsed time: %12v (%.4fns per op)\n", run, lps, float64(lps)/float64(run))
 }
 
-func metricSimu(run int) {
+func metricSimu(run int, seed uint64) {
 	fmt.Println("sea9go metric")
 	var lps time.Duration
 	var n uint32 = uint32(len(tESTS))
+	rnd := v2.New(v2.NewPCG(seed, seed+2))
 	now := time.Now()
 	for range run {
-		// idx := fastrand.Uint32n(n)
-		// dec := int(fastrand.Uint32n(7)) + 3
+		// idx := rnd.Uint32N(n)
+		// dec := int(rnd.Uint32N(7)) + 3
 		// log.Printf(" Metric(%20v, %v) -> %16v\n", tESTS[idx], dec, metric.Metric(tESTS[idx], dec))
-		metric.Metric(tESTS[fastrand.Uint32n(n)], int(fastrand.Uint32n(7))+3) // decmial point range 3 to 9
+
+		metric.Metric(tESTS[rnd.Uint32N(n)], int(rnd.Uint32N(7))+3) // decmial point range 3 to 9
 	}
 	lps = time.Since(now)
 	fmt.Printf(" %v simulations elapsed time: %12v (%.4fns per op)\n", run, lps, float64(lps)/float64(run))
@@ -153,6 +157,7 @@ func main() {
 	////////////////// pprof ///////////////////*/
 
 	var err error
+	seed := uint64(time.Now().UnixNano())
 	run := 100000000 // 100,000,000
 	switch len(os.Args) {
 	case 3:
@@ -164,13 +169,15 @@ func main() {
 	case 2:
 		switch os.Args[1] {
 		case "all":
-			run = 10000000 // 10,000,000
-			metricCtrl(run)
-			metricSimu(run)
+			if len(os.Args) < 3 {
+				run = 10000000 // 10,000,000
+			}
+			metricCtrl(run, seed)
+			metricSimu(run, seed)
 		case "metric":
-			metricSimu(run)
+			metricSimu(run, seed)
 		default:
-			metricCtrl(run)
+			metricCtrl(run, seed)
 		}
 	default:
 		log.Println("Usage: ./metric [ctrl|metric|all] [num-of-runs]")
