@@ -27,7 +27,7 @@ My golang utilities
 - traverse `map[string]any` structures (e.g. from json/yaml)
 
 ### `traverse/ordered`
-- traverse `map[string]any` structures from yaml while keeping the order
+- traverse `[]yaml.MapItem` structures from yaml while keeping items order of the file
 
 ---
 
