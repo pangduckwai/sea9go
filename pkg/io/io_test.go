@@ -260,8 +260,15 @@ func TestLine(t *testing.T) {
 			// fmt.Printf("TestLine() - READ:'%v'\n", s)
 			return nil
 		},
-		func(i1, i2 int, b ...[]byte) {
-			fmt.Printf("TestLine() - LOG :'%s'\n", b)
+		func(i0, i1 int, b ...[]byte) {
+			lenb := len(b)
+			if lenb > 0 {
+				if lenb > 1 {
+					fmt.Printf("[RPT][LINE]> [%3v:%3v] \"%s\" .... \"%s\"\n", i0, i1, b[0], b[1])
+				} else {
+					fmt.Printf("[RPT][LINE]1 [%3v:%3v] \"%s\"\n", i0, i1, b[0])
+				}
+			}
 		},
 	)
 	fmt.Printf("TestLine() - R:%v L:%v\n", rcnt, lcnt)
