@@ -2,10 +2,10 @@
 My golang utilities
 
 ## Packages
-### `http\client`
+### `http/client`
 a convinent wrapper of `http.Client`, with support of specifying TLS server certificates and/or mTLS certificates when creating the clients.
 
-### `http\server`
+### `http/server`
 a wrapper of `http.Server` with start/stop/timeout handling
 
 ### `io`

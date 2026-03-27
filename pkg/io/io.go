@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 )
 
 type Encoder interface {
@@ -130,12 +131,12 @@ func pipedDecode(in io.Reader, out io.Writer, decoders ...Decoder) (err error) {
 // character is used to signify the end of input.
 func BufferedRead(
 	rdr *bufio.Reader,
-	size int,
+	bufferSize int,
 	action func(int, []byte) error,
 ) (
 	err error,
 ) {
-	buf := make([]byte, 0, size)
+	buf := make([]byte, 0, bufferSize)
 	cnt := 0
 
 	for err == nil {
@@ -287,5 +288,75 @@ func Prompt(header, prompt string) (str string, err error) {
 		str = str[:lgh-1]
 	}
 
+	return
+}
+
+// ReadLine read line from file
+func ReadLine(
+	in io.Reader,
+	bufferSize int,
+	read func(string) error,
+	log func(int, int, ...[]byte),
+) (
+	rcnt int,
+	lcnt int,
+	err error,
+) {
+	if in == nil {
+		err = fmt.Errorf("reader not ready")
+		return
+	}
+
+	linefeed := func(c byte) bool { return c == 10 } // ascii 10 is "\n"
+
+	rdr := bufio.NewReaderSize(in, bufferSize)
+	n := 0
+	buf, line := make([]byte, 0, bufferSize), make([]byte, 0, bufferSize)
+	for rcnt = 0; ; rcnt++ {
+		n, err = rdr.Read(buf[:bufferSize])
+		if n > 0 {
+			i0, i1 := 0, slices.IndexFunc(buf[:n], linefeed)
+			for i1 >= 0 {
+				if log != nil {
+					log(i0, i1, buf[i0:i0+i1], buf[i0+i1+1:n])
+				}
+				line = append(line, buf[i0:i0+i1]...)
+				errr := read(string(line))
+				if errr != nil {
+					if errr == io.EOF {
+						break
+					}
+					return 0, 0, errr
+				}
+				lcnt++
+				line = line[:0]
+				i0 = i0 + i1 + 1
+				if i0 < n {
+					i1 = slices.IndexFunc(buf[i0:n], linefeed)
+				} else {
+					i1 = -1
+				}
+			}
+			if i0 < n {
+				if log != nil {
+					log(i0, n, buf[i0:n])
+				}
+				line = append(line, buf[i0:n]...)
+			}
+		}
+		if err != nil {
+			if err == io.EOF {
+				err = nil // done
+				if len(line) > 0 {
+					err = read(string(line))
+					if err != nil {
+						return
+					}
+					lcnt++
+				}
+			}
+			break
+		}
+	}
 	return
 }
