@@ -1,4 +1,4 @@
-// Package traverse implements traversal of `map[string]any` structures (e.g. from json/yaml)
+// Package traverse implements traversal of `map[string]any` structures (e.g. from json/yaml).
 package traverse
 
 import "fmt"

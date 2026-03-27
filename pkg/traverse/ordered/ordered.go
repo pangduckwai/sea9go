@@ -1,4 +1,4 @@
-// // Package ordered implements traversal of `[]yaml.MapItem` structures from yaml while keeping items order of the file.
+// Package ordered implements traversal of `[]yaml.MapItem` structures from yaml while keeping items order of the file.
 package ordered
 
 import (
