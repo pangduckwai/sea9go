@@ -35,5 +35,5 @@ My golang utilities
 ### v0.1.0
 - First pre-release version
 
-### v0.2.0
+### v0.2.1
 - Add http client and server
