@@ -14,11 +14,11 @@ My golang utilities
 - stackable encoding/decoding filters
 
 ### `logger`
-- build reusable loggers with prefix
+- build reusable loggers with prefix and labels
 - fast utility for determining number of digits of integers
 
 ### `logger/metric`
-- convert values to metric suffix forms
+- convert integer values to a form with metric suffix
 
 ### `rand`
 - wrapper of fast pseudo random values generation

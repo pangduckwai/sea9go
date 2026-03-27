@@ -1,3 +1,7 @@
+// Package io implements reading from and writing to streams with the following features:
+// - buffered read from io.Reader
+// - read from stdin
+// - stackable encoding/decoding filters
 package io
 
 import (

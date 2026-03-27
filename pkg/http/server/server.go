@@ -1,3 +1,4 @@
+// Package server is a wrapper of `http.Server` with start/stop/timeout handling.
 package server
 
 import (

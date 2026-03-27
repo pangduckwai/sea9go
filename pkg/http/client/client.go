@@ -1,3 +1,4 @@
+// Package client is a convinent wrapper of `http.Client`, with support of TLS and mTLS.
 package client
 
 import (

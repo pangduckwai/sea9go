@@ -1,3 +1,5 @@
+// Package logger implements reusable loggers with prefix and labels;
+// also includes a fast utility for determining number of digits of integers.
 package logger
 
 import (

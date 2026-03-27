@@ -1,3 +1,4 @@
+// Package metric implements conversion of integer values to a form with metric suffix.
 package metric
 
 import (

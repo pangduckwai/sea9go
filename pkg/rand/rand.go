@@ -1,3 +1,4 @@
+// Package rand is a wrapper of fast pseudo random values generation.
 package rand
 
 import (
