@@ -295,8 +295,8 @@ func Prompt(header, prompt string) (str string, err error) {
 func ReadLine(
 	in io.Reader,
 	bufferSize int,
-	read func(string) error,
-	log func(int, int, ...[]byte),
+	action func(string) error,
+	log func(int, int, int, []byte),
 ) (
 	rcnt int,
 	lcnt int,
@@ -318,10 +318,10 @@ func ReadLine(
 			i0, i1 := 0, slices.IndexFunc(buf[:n], linefeed)
 			for i1 >= 0 {
 				if log != nil {
-					log(i0, i1, buf[i0:i0+i1], buf[i0+i1+1:n])
+					log(n, i0, i1, buf[0:n])
 				}
 				line = append(line, buf[i0:i0+i1]...)
-				errr := read(string(line))
+				errr := action(string(line))
 				if errr != nil {
 					if errr == io.EOF {
 						break
@@ -339,7 +339,7 @@ func ReadLine(
 			}
 			if i0 < n {
 				if log != nil {
-					log(i0, n, buf[i0:n])
+					log(n, i0, n, buf[0:n])
 				}
 				line = append(line, buf[i0:n]...)
 			}
@@ -348,7 +348,7 @@ func ReadLine(
 			if err == io.EOF {
 				err = nil // done
 				if len(line) > 0 {
-					err = read(string(line))
+					err = action(string(line))
 					if err != nil {
 						return
 					}
