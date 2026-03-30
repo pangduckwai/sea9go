@@ -11,9 +11,13 @@ a wrapper of `http.Server` with start/stop/timeout handling
 ### `io`
 implements reading from and writing to streams with the following features:
 - buffered read from io.Reader
-- read from stdin
 - stackable encoding/decoding filters
-- read lines from io.Reader
+
+### `io/line`
+read lines from io.Reader
+
+### `io/prompt`
+read from stdin
 
 ### `logger`
 - implements reusable loggers with prefix and labels,
@@ -42,3 +46,6 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 
 ### v0.2.2
 - Add read line
+
+### v0.2.3
+- Refactor package `io`

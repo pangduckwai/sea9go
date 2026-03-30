@@ -2,6 +2,7 @@
 
 ### Commit source code to git
 ```bash
+$ git status
 $ git add .
 $ git commit -m "[commit message]"
 ```
