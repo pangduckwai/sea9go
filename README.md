@@ -2,10 +2,10 @@
 My golang utilities
 
 ## Packages
-### `http/client`
+### `http`/`client`
 a convinent wrapper of `http.Client`, with support of specifying TLS server certificates and/or mTLS certificates when creating clients.
 
-### `http/server`
+### `http`/`server`
 a wrapper of `http.Server` with start/stop/timeout handling.
 
 ### `io`
@@ -13,26 +13,26 @@ implements reading from and writing to streams with the following features:
 - buffered read from `io.Reader`
 - stackable encoding/decoding filters
 
-### `io/line`
+### `io`/`line`
 read lines from `io.Reader`.
 
-### `io/prompt`
+### `io`/`prompt`
 read user input from `stdin`.
 
 ### `logger`
 - implements reusable loggers with prefix and labels,
-- a fast utility for determining number of digits of integers (reference: `github.com/doloopwhile/go-fastlog`).
+- a fast utility for determining number of digits of integers (reference: [github.com/doloopwhile/go-fastlog](https://pkg.go.dev/github.com/doloopwhile/go-fastlog)).
 
-### `logger/metric`
-implements conversion of integer values to decimal values with metric suffix (reference: `github.com/bmkessler/fastdiv`).
+### `logger`/`metric`
+implements conversion of integer values to decimal values with metric suffix (reference: [github.com/bmkessler/fastdiv](https://pkg.go.dev/github.com/bmkessler/fastdiv)).
 
 ### `rand`
-a wrapper of fast pseudo random values generation from `github.com/bytedance/gopkg/lang/fastrand`.
+a wrapper of fast pseudo random values generation from [github.com/bytedance/gopkg/lang/fastrand](https://pkg.go.dev/github.com/bytedance/gopkg/lang/fastrand).
 
 ### `traverse`
 implements traversal of `map[string]any` structures (e.g. from `json`/`yaml`).
 
-### `traverse/ordered`
+### `traverse`/`ordered`
 implements traversal of `[]yaml.MapItem` structures from yaml while keeping items order of the file.
 
 ---
