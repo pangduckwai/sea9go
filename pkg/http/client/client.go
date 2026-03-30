@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/pangduckwai/sea9go/internal/errors"
+	"github.com/pangduckwai/sea9go/pkg/errors"
 )
 
 func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
@@ -35,7 +35,6 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 	var certPool *x509.CertPool
 	var keyPair tls.Certificate
 	var cp, kp int
-	errs := make([]error, 0)
 
 	if pths != "" {
 		bufs, err = os.ReadFile(pths)
@@ -44,7 +43,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 				err = errors.Fatalf("[CERT] error reading server cert: %v", err)
 				return
 			} else {
-				errs = append(errs, errors.NonFatalf("[CERT] server cert '%v' missing", pths))
+				err = errors.Appendf(err, "[CERT] server cert '%v' missing", pths)
 			}
 		} else {
 			certPool = x509.NewCertPool()
@@ -60,7 +59,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 				err = errors.Fatalf("[CERT] error reading client cert: %v", err)
 				return
 			} else {
-				errs = append(errs, errors.NonFatalf("[CERT] client cert '%v' missing", pthc))
+				err = errors.Appendf(err, "[CERT] client cert '%v' missing", pthc)
 			}
 		} else {
 			kp++
@@ -71,7 +70,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 				err = errors.Fatalf("[CERT] error reading client key: %v", err)
 				return
 			} else {
-				errs = append(errs, errors.NonFatalf("[CERT] client key '%v' missing", pthk))
+				err = errors.Appendf(err, "[CERT] client key '%v' missing", pthk)
 			}
 		} else {
 			kp++
@@ -99,9 +98,6 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 		tlsCfg = &tls.Config{} // No cert
 	}
 
-	if len(errs) > 0 {
-		err = errors.NonFatal(errors.Errors(errs...).Error())
-	}
 	return
 }
 

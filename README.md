@@ -2,6 +2,9 @@
 My golang utilities
 
 ## Packages
+### `error`
+an error type with the boolean property 'Fatal' to indicate the severity, also supports multiple errors under 1 instance.
+
 ### `http`/`client`
 a convinent wrapper of `http.Client`, with support of specifying TLS server certificates and/or mTLS certificates when creating clients.
 
@@ -49,3 +52,6 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 
 ### v0.2.3
 - Refactor package `io`
+
+### v0.2.4
+- Add package `errors`
