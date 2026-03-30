@@ -3,7 +3,7 @@ My golang utilities
 
 ## Packages
 ### `http/client`
-a convinent wrapper of `http.Client`, with support of specifying TLS server certificates and/or mTLS certificates when creating the clients.
+a convinent wrapper of `http.Client`, with support of specifying TLS server certificates and/or mTLS certificates when creating clients.
 
 ### `http/server`
 a wrapper of `http.Server` with start/stop/timeout handling
@@ -13,15 +13,17 @@ implements reading from and writing to streams with the following features:
 - buffered read from io.Reader
 - read from stdin
 - stackable encoding/decoding filters
+- read lines from io.Reader
 
 ### `logger`
-implements reusable loggers with prefix and labels, also includes a fast utility for determining number of digits of integers.
+- implements reusable loggers with prefix and labels,
+- a fast utility for determining number of digits of integers (reference: github.com/doloopwhile/go-fastlog).
 
 ### `logger/metric`
-implements conversion of integer values to a form with metric suffix.
+implements conversion of integer values to decimal values with metric suffix (reference: github.com/bmkessler/fastdiv/).
 
 ### `rand`
-a wrapper of fast pseudo random values generation.
+a wrapper of fast pseudo random values generation from "github.com/bytedance/gopkg/lang/fastrand".
 
 ### `traverse`
 implements traversal of `map[string]any` structures (e.g. from json/yaml).
@@ -37,3 +39,6 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 
 ### v0.2.1
 - Add http client and server
+
+### v0.2.2
+- Add read line
