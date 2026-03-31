@@ -2,7 +2,7 @@
 // - buffered read from io.Reader
 // - read from stdin
 // - stackable encoding/decoding filters
-package io
+package inout
 
 import (
 	"bufio"

@@ -1,5 +1,9 @@
 package logger
 
+// Usage:
+// $ cd .../logger
+// $ go test -bench . -benchmem
+
 import (
 	"fmt"
 	"math"

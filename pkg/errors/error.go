@@ -57,6 +57,16 @@ func New(fatal bool, errs ...string) (r *Err) {
 	return
 }
 
+func Count(err error) int {
+	if err == nil {
+		return 0
+	}
+	if e, ok := err.(*Err); ok {
+		return len(e.Errors)
+	}
+	return 1
+}
+
 func IsFatal(err error) bool {
 	if e, ok := err.(*Err); ok {
 		return e.Fatal // for error type Err, check the e.Fatal flag

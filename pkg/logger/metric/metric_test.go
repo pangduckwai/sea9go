@@ -1,5 +1,9 @@
 package metric
 
+// Usage:
+// $ cd .../metric
+// $ go test -bench . -benchmem
+
 import (
 	"fmt"
 	"math"

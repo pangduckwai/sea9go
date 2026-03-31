@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/pangduckwai/sea9go/pkg/io"
+	"github.com/pangduckwai/sea9go/pkg/inout"
 )
 
-func inout(in, out string) (err error) {
+func inOut(in, out string) (err error) {
 	inp := os.Stdin
 	if in != "" {
 		inp, err = os.Open(in)
@@ -26,12 +26,12 @@ func inout(in, out string) (err error) {
 		defer opn.Close()
 	}
 
-	read, err := io.Read(inp, 16)
+	read, err := inout.Read(inp, 16)
 	if err != nil {
 		return
 	}
 
-	err = io.Write(opn, read)
+	err = inout.Write(opn, read)
 	return
 }
 
@@ -48,7 +48,7 @@ func main() {
 		log.Println("Usage: ./io [in file path] [out file path]")
 		os.Exit(0)
 	}
-	err = inout(in, out)
+	err = inOut(in, out)
 	if err != nil {
 		log.Fatal(err)
 	}

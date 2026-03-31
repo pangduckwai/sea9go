@@ -1,8 +1,8 @@
 package rand
 
 // Usage:
-// > cd .../pkg/fast
-// > go test -bench .
+// $ cd .../rand
+// $ go test -bench . -benchmem
 
 import (
 	"testing"

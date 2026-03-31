@@ -1,4 +1,4 @@
-package io
+package inout
 
 import (
 	"bufio"
@@ -87,7 +87,7 @@ func encode(n encoding, r io.Reader, w io.Writer) (err error) {
 			err = encode(inp[:cnt], cnt, false)
 		}
 		if err == nil {
-			fmt.Printf("TEMP... %v (%v) bytes read\n", cnt, len(inp))
+			fmt.Printf("encode() TEMP... %v (%v) bytes read\n", cnt, len(inp))
 		}
 		return err
 	})
@@ -153,7 +153,7 @@ func decode(n encoding, r io.Reader, w io.Writer) (err error) {
 			err = decode(inp[:cnt], cnt, false)
 		}
 		if err == nil {
-			fmt.Printf("TEMP... %v (%v) bytes read\n", cnt, len(inp))
+			fmt.Printf("decode() TEMP... %v (%v) bytes read\n", cnt, len(inp))
 		}
 		return err
 	})
@@ -249,4 +249,29 @@ func TestWrite(t *testing.T) {
 		t.Fatalf("TestWrite() result '%s' does not match the expectation", result)
 	}
 	fmt.Printf("TestWrite() result matches '%v'\n", expected)
+}
+
+func TestPipedPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	var buf bytes.Buffer
+	out := bufio.NewWriter(&buf)
+	in := bytes.NewReader([]byte("H4sIAAAAAAAA//JIzcnJ98gvdyxKjcwvtfdUz3XLzEsNyUjMy47MLw1LLar0LU3OUAQAAAD//wEAAP//L9lnyicAAAA="))
+	var e0, e1 Decoder = nil, nil
+
+	err := pipedDecode(in, out)
+	if err == nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("TestPipedPanic() not piped: %v\n", err)
+
+	err = pipedDecode(in, out, e0, e1) // should panic
+	if err == nil {
+		t.Fatal(err)
+	}
+	fmt.Println("TestPipedPanic() test okay")
 }

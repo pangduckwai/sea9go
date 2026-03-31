@@ -11,15 +11,15 @@ a convinent wrapper of `http.Client`, with support of specifying TLS server cert
 ### `http`/`server`
 a wrapper of `http.Server` with start/stop/timeout handling.
 
-### `io`
+### `inout`
 implements reading from and writing to streams with the following features:
 - buffered read from `io.Reader`
 - stackable encoding/decoding filters
 
-### `io`/`line`
+### `inout`/`line`
 read lines from `io.Reader`.
 
-### `io`/`prompt`
+### `inout`/`prompt`
 read user input from `stdin`.
 
 ### `logger`
@@ -55,3 +55,7 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 
 ### v0.2.4
 - Add package `errors`
+
+### v0.3.0
+- Add package `strings/match`
+- Rename package `io`
