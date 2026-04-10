@@ -32,6 +32,9 @@ implements conversion of integer values to decimal values with metric suffix (re
 ### `rand`
 a wrapper of fast pseudo random values generation from [github.com/bytedance/gopkg/lang/fastrand](https://pkg.go.dev/github.com/bytedance/gopkg/lang/fastrand).
 
+### `strings`/`match`
+an utility to lookup from a given slice the best match(es) of a given input.
+
 ### `traverse`
 implements traversal of `map[string]any` structures (e.g. from `json`/`yaml`).
 
@@ -59,3 +62,6 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 ### v0.3.0
 - Add package `strings/match`
 - Rename package `io`
+
+### v0.3.1
+- Add server name to `http/server/`
