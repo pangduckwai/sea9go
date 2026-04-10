@@ -14,6 +14,7 @@ const SECOND_1 = 1 * time.Second
 // Prepare prepare a http server and return the functions to start/stop it.
 // - map keys of the argument 'handler' are the route of each http handler
 func Prepare(
+	name string,
 	port, idle int,
 	readTimeout, writeTimeout time.Duration,
 	handler map[string]func(http.ResponseWriter, *http.Request),
@@ -50,7 +51,7 @@ func Prepare(
 
 	start = func(stopping func()) bool {
 		var wg sync.WaitGroup
-		log(" HTTP server (r:%v|w:%v) listening on port %d...\n", readTimeout, writeTimeout, port)
+		log(" \"%v\" (r:%v|w:%v) listening on port %d...\n", name, readTimeout, writeTimeout, port)
 
 		wg.Add(1)
 		go func() {

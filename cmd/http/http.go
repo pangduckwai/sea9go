@@ -212,6 +212,7 @@ func main() {
 	}
 
 	start, stop, stopped := server.Prepare(
+		"Test server",
 		PORT, IDLE,
 		10*time.Second, 30*time.Second,
 		hndr,

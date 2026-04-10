@@ -137,7 +137,13 @@ func Client(
 }
 
 // ClientInsecure prepare a http client which skip TLS cert verification.
-func ClientInsecure(timeout int, path ...string) (client *http.Client, err error) {
+func ClientInsecure(
+	timeout int,
+	path ...string,
+) (
+	client *http.Client,
+	err error,
+) {
 	var tlsCfg *tls.Config
 	tlsCfg, err = getTlsConfig(path...)
 	if err != nil {

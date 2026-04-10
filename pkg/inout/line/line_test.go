@@ -19,7 +19,7 @@ func TestLine(t *testing.T) {
 	lf, pg := fmt.Sprintf("%c", 10), fmt.Sprintf("%c", 185)
 	read := make([]string, 0)
 	ctrl := make([]string, 0)
-	line := make([]byte, 0)
+	logl := make([]byte, 0)
 
 	rcnt, lcnt, err := ReadLine(
 		f, BUFFER,
@@ -39,12 +39,12 @@ func TestLine(t *testing.T) {
 			}
 			if i1 < n {
 				fmt.Printf("TestLine()+ [%3v:%3v] \"%v\" -> \"%s\"\n", i0, i1, dspy, b[i0:i0+i1])
-				line = append(line, b[i0:i0+i1]...)
-				ctrl = append(ctrl, string(line))
-				line = line[:0]
+				logl = append(logl, b[i0:i0+i1]...)
+				ctrl = append(ctrl, string(logl))
+				logl = logl[:0]
 			} else {
 				fmt.Printf("TestLine()¤ [%3v:%3v] \"%v\" -> \"%s\"\n", i0, i1, dspy, b[i0:])
-				line = append(line, b[i0:]...)
+				logl = append(logl, b[i0:]...)
 			}
 			fmt.Printf("                       %s\n", mask)
 		},
@@ -52,8 +52,8 @@ func TestLine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(line) > 0 {
-		ctrl = append(ctrl, string(line))
+	if len(logl) > 0 {
+		ctrl = append(ctrl, string(logl))
 	}
 
 	if len(read) != len(ctrl) {
