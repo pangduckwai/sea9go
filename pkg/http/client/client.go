@@ -4,6 +4,7 @@ package client
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -162,5 +163,23 @@ func ClientInsecure(
 			TLSClientConfig: tlsCfg,
 		},
 	}
+	return
+}
+
+// GetTlsCerts examine if any, the configured TLS and mTLS certificates in the given http client.
+func GetTlsCerts(
+	client *http.Client,
+) (
+	tls *x509.CertPool,
+	mtls []tls.Certificate,
+	err error,
+) {
+	trns, okay := client.Transport.(*http.Transport)
+	if !okay {
+		err = fmt.Errorf("HTTP transport type mismatched")
+		return
+	}
+	tls = trns.TLSClientConfig.RootCAs
+	mtls = trns.TLSClientConfig.Certificates
 	return
 }

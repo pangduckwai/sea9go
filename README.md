@@ -65,3 +65,6 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 
 ### v0.3.1
 - Add server name to `http/server/`
+
+### v0.3.2
+- Improve the http client wrapper
