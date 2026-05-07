@@ -208,6 +208,14 @@ func TestErrs(t *testing.T) {
 	fmt.Printf("TestErrs()\n%v\n\n", err)
 }
 
+func TestList(t *testing.T) {
+	var err *Err
+	for i := range 5 {
+		err = Append(err, fmt.Errorf("[LIST] error %v", i))
+	}
+	fmt.Printf("TestList()\n%v\n\n", err)
+}
+
 func TestPackage(t *testing.T) {
 	err0 := New(false, "yo!")
 	var err1 error = errors.New("error 1")
