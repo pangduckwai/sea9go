@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pangduckwai/sea9go/pkg/errors"
+	"github.com/pangduckwai/sea9go/pkg/errs"
 )
 
 var aLGORITHMS = []string{
@@ -58,12 +58,12 @@ func TestMatch(t *testing.T) {
 		case 0:
 			fmt.Printf("TestMatch() %2v x false %-23v (-) : match not found\n", i, inp.s)
 			if inp.x != 0 {
-				err = errors.Appendf(err, "expects %v match(es) for '%v', found none", inp.x, inp.s)
+				err = errs.Appendf(err, "expects %v match(es) for '%v', found none", inp.x, inp.s)
 			}
 		case 1:
 			fmt.Printf("TestMatch() %2v v true  %-23v (%v) -> %v\n", i, inp.s, typ, mth)
 			if inp.x != 1 {
-				err = errors.Appendf(err, "expects %v match(es) for '%v', found 1", inp.x, inp.s)
+				err = errs.Appendf(err, "expects %v match(es) for '%v', found 1", inp.x, inp.s)
 			}
 		default:
 			mths := make([]string, 0)
@@ -72,11 +72,11 @@ func TestMatch(t *testing.T) {
 			}
 			fmt.Printf("TestMatch() %2v - true  %-23v (%v) -> %v (%v)\n", i, inp.s, typ, mths, mth)
 			if inp.x != len(indices) {
-				err = errors.Appendf(err, "expects %v match(es) for '%v', found %v", inp.x, inp.s, len(indices))
+				err = errs.Appendf(err, "expects %v match(es) for '%v', found %v", inp.x, inp.s, len(indices))
 			}
 		}
 	}
-	if errors.Count(err) > 0 {
+	if errs.Count(err) > 0 {
 		t.Fatal(err)
 	}
 }
