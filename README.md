@@ -3,7 +3,7 @@ My golang utilities
 
 ## Packages
 ### `error`
-an error type with the boolean property 'Fatal' to indicate the severity, also supports multiple errors under 1 instance.
+an error type with the boolean property 'fatal' to indicate the severity, also supports multiple errors under 1 instance.
 
 ### `http`/`client`
 a convinent wrapper of `http.Client`, with support of specifying TLS server certificates and/or mTLS certificates when creating clients.
@@ -69,32 +69,6 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 ### v0.3.2
 - Improve the http client wrapper
 
----
-
-## Publishing this module
-### Create the module
-```bash
-$ go mod init github.com/pangduckwai/sea9go
-```
-
-### Commit source code to git
-```bash
-$ git status
-$ git add .
-$ git commit -m "[commit message]"
-```
-
-### Tag version
-```bash
-$ git tag vX.Y.Z
-```
-
-### Publish to github
-```bash
-$ git push --atomic origin master vX.Y.Z
-```
-
-### Update go modules index
-```bash
-$ GOPROXY=proxy.golang.org go list -m github.com/pangduckwai/sea9go@vX.Y.Z
-```
+### v0.4.0
+- Change behaviour of `errors`.`Append()` to align with the package's underlying logic
+- Allow `http/server` to have no idle time

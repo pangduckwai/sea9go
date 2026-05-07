@@ -200,10 +200,10 @@ func TestPackage(t *testing.T) {
 	err := Append(err0, err1)
 	err.errors = append(err.errors, err2)
 	if Count(err) != 3 {
-		t.Fatalf("TestErrs() expected 3 errors but got %v", Count(err))
+		t.Fatalf("TestPackage() expected 3 errors but got %v", Count(err))
 	}
 	if IsFatal(err) {
-		t.Fatalf("TestErrs() expected non-fatal error but got fatal")
+		t.Fatalf("TestPackage() expected non-fatal error but got fatal")
 	}
-	fmt.Printf("TestErrs()\n%v\n\n", err)
+	fmt.Printf("TestPackage()\n%v\n\n", err)
 }

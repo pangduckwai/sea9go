@@ -12,14 +12,21 @@ import (
 const SECOND_1 = 1 * time.Second
 
 // Prepare prepare a http server and return the functions to start/stop it.
-// - map keys of the argument 'handler' are the route of each http handler
+// * Parameters:
+//   - 'idle': the idle time (in seconds) before the server is automatically stopped, < 0 means no timeout
+//   - 'handler': its map keys are the route of each http handler
+//
+// * Returns:
+//   - 'start': the function to start the server, it accepts a callback function which is called when the server is stopped
+//   - 'stop': the function to stop the server
+//   - 'stopped': the channel to signal when the server is stopped
 func Prepare(
 	name string,
 	port, idle int,
 	readTimeout, writeTimeout time.Duration,
 	handler map[string]func(http.ResponseWriter, *http.Request),
 	log, logerr func(string, ...any),
-	debug, verbose bool,
+	verbose bool,
 ) (
 	start func(func()) bool,
 	stop func(),
@@ -31,7 +38,14 @@ func Prepare(
 		WriteTimeout:   writeTimeout * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	idlecnt := 0
+
+	running := true
+	idleCnt := 0
+	incr := 1
+	if idle < 0 {
+		idle = 1
+		incr = 0
+	}
 
 	stopped = make(chan bool)
 	cctrl := make(chan bool)
@@ -57,12 +71,12 @@ func Prepare(
 		go func() {
 			for flag := range cctrl {
 				if flag {
-					idlecnt = 0 // timeout counter resetted
-					if verbose {
+					idleCnt = 0 // timeout counter resetted
+					if verbose && incr > 0 {
 						log(" server timeout reset to %3vs\n", idle)
 					}
 				} else {
-					idlecnt = idle
+					running = false
 					if verbose {
 						log(" server stopping...\n")
 					}
@@ -73,13 +87,13 @@ func Prepare(
 
 		wg.Add(1)
 		go func() {
-			for ; idlecnt < idle; idlecnt++ {
-				if (idlecnt%5 == 0) && (debug || verbose) {
-					log(" server timeout in %3vs\n", idle-idlecnt)
+			for ; idleCnt < idle && running; idleCnt += incr {
+				if (idleCnt%5 == 0) && verbose && incr > 0 {
+					log(" server timeout in %3vs\n", idle-idleCnt)
 				}
 				time.Sleep(SECOND_1)
 			}
-			if verbose {
+			if verbose && running {
 				log(" server shutting down...\n")
 			}
 			server.Shutdown(context.Background())

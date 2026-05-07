@@ -19,7 +19,6 @@ import (
 
 const FRM_LOGF_SEC = "2006-01-02_15:04:05"
 const PORT = 8999
-const IDLE = 30
 
 func hasher() (
 	hash func([]byte) (string, error),
@@ -47,54 +46,178 @@ func hasher() (
 	return
 }
 
-// Usage: ./http [delay] [verbose] [num-of-runs]
-func main() {
-	var wg sync.WaitGroup
-	var err error
-	var run, dgt, tmp = 14, 2, 0
-	vbs := false
-	dly := 0
-	lo, le, lf := logger.Init()
+func getHndlr(hsh func(string) (string, error), log func(string, ...any)) map[string]func(http.ResponseWriter, *http.Request) {
+	return map[string]func(http.ResponseWriter, *http.Request){
+		"/test1/{env}/{ts}": func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			if r.Method != "GET" {
+				err = fmt.Errorf("unsupported method '%v'", r.Method)
+				http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+				log(" %v\n", err)
+				return
+			}
 
+			auth, okay := r.Header["Authorization"]
+			if !okay || !strings.HasPrefix(auth[0], "Bearer ") {
+				err = fmt.Errorf("unauthorized access")
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				log(" %v\n", err)
+				return
+			}
+
+			ts := r.PathValue("ts")
+			if ts == "" {
+				err = fmt.Errorf("missing request path 'ts'")
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log(" %v\n", err)
+				return
+			}
+			tk, err := hsh(ts)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log(" %v\n", err)
+				return
+			}
+			if tk != auth[0][7:] {
+				err = fmt.Errorf("authorization failed")
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				log(" %v\n", err)
+				return
+			}
+
+			env := r.PathValue("env")
+			if env == "" {
+				err = fmt.Errorf("missing request path 'env'")
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log(" %v\n", err)
+				return
+			}
+
+			time.Sleep(100 * time.Millisecond)
+			_, err = fmt.Fprintf(w, "%v GET TEST1: TSTMP:%v TK:%v", time.Now().Format(FRM_LOGF_SEC), ts, tk)
+			if err != nil {
+				err = fmt.Errorf("[RES] %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log(" %v\n", err)
+				return
+			}
+		},
+		"/test2/{delay}": func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			if r.Method != "GET" {
+				err = fmt.Errorf("unsupported method '%v'", r.Method)
+				http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+				log(" %v\n", err)
+				return
+			}
+
+			auth, okay := r.Header["Authorization"]
+			if !okay || !strings.HasPrefix(auth[0], "Bearer ") {
+				err = fmt.Errorf("unauthorized access")
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				log(" %v\n", err)
+				return
+			}
+
+			delay := r.PathValue("delay")
+			if delay == "" {
+				err = fmt.Errorf("missing request path 'delay'")
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log(" %v\n", err)
+				return
+			}
+			tk, err := hsh(delay)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log(" %v\n", err)
+				return
+			}
+			if tk != auth[0][7:] {
+				err = fmt.Errorf("authorization failed")
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				log(" %v\n", err)
+				return
+			}
+
+			time.Sleep(100 * time.Millisecond)
+			_, err = fmt.Fprintf(w, "%v GET TEST2: DELAY:%013v TK:%v", time.Now().Format(FRM_LOGF_SEC), delay, tk)
+			if err != nil {
+				err = fmt.Errorf("[RES] %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log(" %v\n", err)
+				return
+			}
+		},
+	}
+}
+
+func args() (dly, run, idle, dgt int, wait bool, err error) {
+	var tmp int
+	dly, run, idle, dgt = 0, 7, -1, 2
 	switch len(os.Args) {
 	case 4:
 		tmp, err = strconv.Atoi(os.Args[3])
 		if err != nil {
-			lf("%v", err)
-		}
-		if tmp < 0 {
-			run = -tmp
-		} else if tmp > 0 {
-			run = tmp
-		}
-		dgt = logger.DigitCount(uint64(run))
-		fallthrough
-	case 3:
-		vbs, err = strconv.ParseBool(os.Args[2])
-		if err != nil {
-			lf("%v", err)
-		}
-		fallthrough
-	case 2:
-		dly, err = strconv.Atoi(os.Args[1])
-		if err != nil {
-			lf("%v", err)
+			return
 		}
 		switch {
-		case dly <= 5:
+		case tmp < 0:
+			idle = -1
+		case tmp < 15:
+			idle = 15
+		case tmp > 30:
+			idle = 30
+		default:
+			idle = tmp
+		}
+		fallthrough
+	case 3:
+		tmp, err = strconv.Atoi(os.Args[2])
+		if err != nil {
+			return
+		}
+		run = tmp
+		dgt = logger.DigitCount(uint64(run))
+		fallthrough
+	case 2:
+		tmp, err = strconv.Atoi(os.Args[1])
+		if err != nil {
+			return
+		}
+		switch {
+		case tmp <= 5:
 			dly = 0
-		case dly <= 10:
+		case tmp <= 10:
 			dly = 6
-		case dly <= 15:
+		case tmp <= 15:
 			dly = 11
-		case dly <= IDLE:
+		case tmp <= 30:
 			dly = 16
 		default:
-			dly = IDLE + 1
+			dly = 31
 		}
 	}
+	if dly > 0 {
+		idle = 15
+	}
+	if idle > 0 {
+		wait = true
+	}
+	return
+}
 
-	logsvr, errsvr := logger.AddPrefix(lo, "SERVER"), logger.AddPrefix(le, "SERVER")
+// Usage: ./http [start-delay] [num-of-runs] [server-idle]
+func main() {
+	var wg sync.WaitGroup
+	var wait bool
+	lo, le, lf := logger.Init()
+
+	dly, run, idle, dgt, wait, err := args()
+	if err != nil {
+		lf("error parsing arguments: %v", err)
+	}
+
+	logtst, logsvr, errsvr := logger.AddPrefix(lo, "TESTER"), logger.AddPrefix(lo, "SERVER"), logger.AddPrefix(le, "SERVER")
 	fatal := logger.AddPrefix(lf, "CLIENT")
 	logcln, _ := logger.AddLabels(logger.AddPrefix(lo, "CLIENT"), 2, 1, 2, dgt)
 	errcln, _ := logger.AddLabels(logger.AddPrefix(le, "CLIENT"), 2, 1, 2, dgt)
@@ -104,124 +227,25 @@ func main() {
 
 	/////////////////
 	// start server
-	var hndr = map[string]func(http.ResponseWriter, *http.Request){
-		"/test1/{env}/{ts}": func(w http.ResponseWriter, r *http.Request) {
-			var err error
-			if r.Method != "GET" {
-				err = fmt.Errorf("unsupported method '%v'", r.Method)
-				http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			auth, okay := r.Header["Authorization"]
-			if !okay || !strings.HasPrefix(auth[0], "Bearer ") {
-				err = fmt.Errorf("unauthorized access")
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			ts := r.PathValue("ts")
-			if ts == "" {
-				err = fmt.Errorf("missing request path 'ts'")
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				errsvr(" %v\n", err)
-				return
-			}
-			tk, err := hashString(ts)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				errsvr(" %v\n", err)
-				return
-			}
-			if tk != auth[0][7:] {
-				err = fmt.Errorf("authorization failed")
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			env := r.PathValue("env")
-			if env == "" {
-				err = fmt.Errorf("missing request path 'env'")
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			time.Sleep(100 * time.Millisecond)
-			_, err = fmt.Fprintf(w, "%v GET TEST1: TSTMP:%v TK:%v", time.Now().Format(FRM_LOGF_SEC), ts, tk)
-			if err != nil {
-				err = fmt.Errorf("[RES] %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				errsvr(" %v\n", err)
-				return
-			}
-		},
-		"/test2/{delay}": func(w http.ResponseWriter, r *http.Request) {
-			var err error
-			if r.Method != "GET" {
-				err = fmt.Errorf("unsupported method '%v'", r.Method)
-				http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			auth, okay := r.Header["Authorization"]
-			if !okay || !strings.HasPrefix(auth[0], "Bearer ") {
-				err = fmt.Errorf("unauthorized access")
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			delay := r.PathValue("delay")
-			if delay == "" {
-				err = fmt.Errorf("missing request path 'delay'")
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				errsvr(" %v\n", err)
-				return
-			}
-			tk, err := hashString(delay)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				errsvr(" %v\n", err)
-				return
-			}
-			if tk != auth[0][7:] {
-				err = fmt.Errorf("authorization failed")
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				errsvr(" %v\n", err)
-				return
-			}
-
-			time.Sleep(100 * time.Millisecond)
-			_, err = fmt.Fprintf(w, "%v GET TEST2: DELAY:%013v TK:%v", time.Now().Format(FRM_LOGF_SEC), delay, tk)
-			if err != nil {
-				err = fmt.Errorf("[RES] %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				errsvr(" %v\n", err)
-				return
-			}
-		},
-	}
-
-	if dly > 0 {
-		vbs = true
-	}
-
+	logtst(" Starting http package test: delay: %v; run: %v; idle: %v\n", dly, run, idle)
 	start, stop, stopped := server.Prepare(
 		"Test server",
-		PORT, IDLE,
+		PORT, idle,
 		10*time.Second, 30*time.Second,
-		hndr,
+		getHndlr(hashString, errsvr),
 		logsvr, errsvr,
-		false, vbs,
+		true,
 	)
 	go func() {
 		start(nil)
 	}()
+
+	if !wait {
+		go func() {
+			<-stopped
+			logtst(" received `stopped` signal\n")
+		}()
+	}
 
 	////////////////////
 	// prepare clients
@@ -233,8 +257,8 @@ func main() {
 		time.Sleep(time.Duration(dly) * time.Second) // delay 6 to 16 seconds
 	}
 
-	//////////////
-	// thread #1
+	////////////////////
+	// client thread #1
 	wg.Add(1)
 	go func(client *http.Client) {
 		var err error
@@ -264,16 +288,20 @@ func main() {
 				fatalc("[RES][READ]%v", 1, i, err)
 			}
 
-			if string(buf[54:]) == tk {
-				logcln("[RES] OKAY \"%v\"\n", 1, i, string(buf[:50]))
+			if len(buf) > 54 {
+				if string(buf[54:]) == tk {
+					logcln("[RES] OKAY \"%v\"\n", 1, i, string(buf[:50]))
+				} else {
+					errcln("[RES] FAILED %v\n", 1, i, string(buf))
+				}
 			} else {
-				errcln("[RES] FAILED %v\n", 1, i, string(buf))
+				errcln("[RES] FAILED: %v\n", 1, i, string(buf))
 			}
 		}
 	}(client)
 
-	//////////////
-	// thread #2
+	////////////////////
+	// client thread #2
 	wg.Add(1)
 	go func(client *http.Client) {
 		var err error
@@ -303,19 +331,27 @@ func main() {
 				fatalc("[RES][READ]%v", 2, i, err)
 			}
 
-			if string(buf[54:]) == tk {
-				logcln("[RES] OKAY \"%v\"\n", 2, i, string(buf[:50]))
+			if len(buf) > 54 {
+				if string(buf[54:]) == tk {
+					logcln("[RES] OKAY \"%v\"\n", 2, i, string(buf[:50]))
+				} else {
+					errcln("[RES] FAILED %v\n", 2, i, string(buf))
+				}
 			} else {
-				errcln("[RES] FAILED %v\n", 2, i, string(buf))
+				errcln("[RES] FAILED: %v\n", 2, i, string(buf))
 			}
 		}
 	}(client)
 
 	wg.Wait()
-	go func() {
+
+	if !wait {
+		logtst(" stopping the server in 3 seconds...\n")
+		time.Sleep(3 * time.Second)
+		stop()
+	} else {
 		<-stopped
-		logsvr(" received `stopped` signal\n")
-	}()
-	stop()
+		logtst(" server stopped\n")
+	}
 	time.Sleep(1 * time.Second)
 }
