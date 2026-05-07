@@ -2,7 +2,7 @@
 My golang utilities
 
 ## Packages
-### `errors`
+### `errs`
 an error type with the boolean property 'fatal' to indicate the severity, also supports multiple errors under 1 instance.
 
 ### `http`/`client`
@@ -69,7 +69,8 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 ### v0.3.2
 - Improve the http client wrapper `http/client`
 
-### v0.4.1
+### v0.4.2
 - Change package name `errors` to `errs`
+- Change returns of `errs.Error()`
 - Change behaviour of `errs.Append()` to align with the package's underlying logic
 - Allow `http/server` to have no idle time

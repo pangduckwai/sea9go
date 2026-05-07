@@ -13,40 +13,44 @@ type Err struct {
 }
 
 func (e *Err) Error() string {
-	switch len(e.errors) {
-	case 0:
+	lgth := len(e.errors)
+
+	if lgth < 1 {
 		if e.fatal {
 			return "fatal error"
 		}
 		return "error"
-	case 1:
-		msg := e.errors[0].Error()
-		if e.fatal {
-			if msg == "" {
-				return "fatal error"
-			} else if msg[0] != '[' {
-				return fmt.Sprintf("[FATAL] %v", msg)
-			} else {
-				return fmt.Sprintf("[FATAL]%v", msg)
-			}
-		}
-		return msg
-	default:
-		var sb strings.Builder
-		if e.fatal {
-			fmt.Fprint(&sb, "[FATAL]:")
-		} else {
-			fmt.Fprint(&sb, "errors:")
-		}
-		for _, err := range e.errors {
-			if _, ok := err.(*Err); ok {
-				fmt.Fprintf(&sb, "\n %v.", err)
-			} else {
-				fmt.Fprintf(&sb, "\n %v", err)
-			}
-		}
-		return sb.String()
 	}
+
+	var bdr strings.Builder
+	msg := e.errors[0].Error()
+	if e.fatal {
+		if msg == "" {
+			fmt.Fprint(&bdr, "fatal error")
+		} else if msg[0] != '[' {
+			fmt.Fprintf(&bdr, "[FATAL] %v", msg)
+		} else {
+			fmt.Fprintf(&bdr, "[FATAL]%v", msg)
+		}
+	} else {
+		if msg == "" {
+			fmt.Fprint(&bdr, "error")
+		} else {
+			fmt.Fprint(&bdr, msg)
+		}
+	}
+
+	spr := ":\n"
+	for _, err := range e.errors[1:] {
+		if _, ok := err.(*Err); ok {
+			fmt.Fprintf(&bdr, "%v - %v.", spr, err)
+		} else {
+			fmt.Fprintf(&bdr, "%v - %v", spr, err)
+		}
+		spr = "\n"
+	}
+
+	return bdr.String()
 }
 
 func New(fatal bool, errs ...string) (r *Err) {

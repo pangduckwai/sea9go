@@ -27,6 +27,21 @@ func TestError(t *testing.T) {
 	fmt.Printf("TestError() \"%v\"\n", err)
 }
 
+func TestError2(t *testing.T) {
+	var err0 error
+	var err1 error = errors.New("error 1")
+	var err2 error
+	var err3 error
+	err := Append(err0, err1, err2, err3)
+	if Count(err) != 1 {
+		t.Fatalf("TestError2() expected 1 error but got %v", Count(err))
+	}
+	if !IsFatal(err) {
+		t.Fatalf("TestError2() expected fatal error but got non-fatal")
+	}
+	fmt.Printf("TestError2() \"%v\"\n", err)
+}
+
 func TestNonFatal(t *testing.T) {
 	var err0 error
 	var err1 error = NonFatal("error 1")
@@ -139,8 +154,8 @@ func TestNilss(t *testing.T) {
 
 func TestPlains(t *testing.T) {
 	var err0 *Err
-	var err1 error = errors.New("error 1")
-	var err2 error = errors.New("error 2")
+	var err1 error = errors.New("[YO] error 1")
+	var err2 error = errors.New("[YO] error 2")
 	err := Append(err0, err1, err2)
 	if Count(err) != 2 {
 		t.Fatalf("TestPlains() expected 2 errors but got %v", Count(err))
