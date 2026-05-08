@@ -9,15 +9,13 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/pangduckwai/sea9go/pkg/errs"
 )
 
-func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
+func getTlsConfig(path ...string) (tlsCfg *tls.Config, es, ec, ek, err error) {
 	var pths, pthc, pthk string
 	switch len(path) {
 	case 2:
-		err = errs.Fatal("[CERT] both the client cert and client key are requried for mTLS.")
+		err = fmt.Errorf("[CERT] both the client cert and client key are requried for mTLS.")
 		return
 	case 3:
 		pthc = path[1]
@@ -28,7 +26,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 	case 0:
 		//
 	default:
-		err = errs.Fatal("[CERT] invalid parameters found.")
+		err = fmt.Errorf("[CERT] invalid parameters found.")
 		return
 	}
 
@@ -36,16 +34,16 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 	var certPool *x509.CertPool
 	var keyPair tls.Certificate
 	var cp, kp int
-	var errx error = errs.New(false)
 
 	if pths != "" {
 		bufs, err = os.ReadFile(pths)
 		if err != nil {
 			if !os.IsNotExist(err) {
-				err = errs.Fatalf("[CERT] error reading server cert: %v", err)
+				err = fmt.Errorf("[CERT] error reading server cert: %v", err)
 				return
 			} else {
-				errx = errs.Appendf(errx, "[CERT] server cert '%v' missing", pths)
+				es = fmt.Errorf("[CERT] server cert '%v' missing", pths)
+				err = nil
 			}
 		} else {
 			certPool = x509.NewCertPool()
@@ -58,10 +56,11 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 		bufc, err = os.ReadFile(pthc)
 		if err != nil {
 			if !os.IsNotExist(err) {
-				err = errs.Fatalf("[CERT] error reading client cert: %v", err)
+				err = fmt.Errorf("[CERT] error reading client cert: %v", err)
 				return
 			} else {
-				errx = errs.Appendf(errx, "[CERT] client cert '%v' missing", pthc)
+				ec = fmt.Errorf("[CERT] client cert '%v' missing", pthc)
+				err = nil
 			}
 		} else {
 			kp++
@@ -69,10 +68,11 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 		bufk, err = os.ReadFile(pthk)
 		if err != nil {
 			if !os.IsNotExist(err) {
-				err = errs.Fatalf("[CERT] error reading client key: %v", err)
+				err = fmt.Errorf("[CERT] error reading client key: %v", err)
 				return
 			} else {
-				errx = errs.Appendf(errx, "[CERT] client key '%v' missing", pthk)
+				ek = fmt.Errorf("[CERT] client key '%v' missing", pthk)
+				err = nil
 			}
 		} else {
 			kp++
@@ -80,7 +80,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 		if kp == 2 {
 			keyPair, err = tls.X509KeyPair(bufc, bufk)
 			if err != nil {
-				err = errs.Fatalf("[CERT] error preparing key pair: %v", err)
+				err = fmt.Errorf("[CERT] error preparing key pair: %v", err)
 				return
 			}
 			kp++
@@ -100,9 +100,6 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 		tlsCfg = &tls.Config{} // No cert
 	}
 
-	if errs.Count(errx) > 0 {
-		err = errx
-	}
 	return
 }
 
@@ -122,14 +119,18 @@ func Client(
 	err error,
 ) {
 	var tlsCfg *tls.Config
-	tlsCfg, err = getTlsConfig(path...)
+	tlsCfg, es, ec, ek, err := getTlsConfig(path...)
+	if es != nil {
+		log.Println(es)
+	}
+	if ec != nil {
+		log.Println(ec)
+	}
+	if ek != nil {
+		log.Println(ek)
+	}
 	if err != nil {
-		if errs.IsFatal(err) {
-			return
-		} else {
-			log.Println(err)
-			err = nil
-		}
+		return
 	}
 
 	client = &http.Client{
@@ -150,14 +151,18 @@ func ClientInsecure(
 	err error,
 ) {
 	var tlsCfg *tls.Config
-	tlsCfg, err = getTlsConfig(path...)
+	tlsCfg, es, ec, ek, err := getTlsConfig(path...)
+	if es != nil {
+		log.Println(es)
+	}
+	if ec != nil {
+		log.Println(ec)
+	}
+	if ek != nil {
+		log.Println(ek)
+	}
 	if err != nil {
-		if errs.IsFatal(err) {
-			return
-		} else {
-			log.Println(err)
-			err = nil
-		}
+		return
 	}
 	tlsCfg.InsecureSkipVerify = true
 
