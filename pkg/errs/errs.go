@@ -10,59 +10,83 @@ import (
 type Err struct {
 	fatal  bool // Fatal severity level, 'true' -> fatal error, should stop further processing
 	errors []error
+	labels []string
 }
 
-func (e *Err) Error() string {
+func (e *Err) Error() (str string) {
 	lgth := len(e.errors)
-
 	if lgth < 1 {
 		if e.fatal {
-			return "error"
-		}
-		return "non-fatal error"
-	}
-
-	var bdr strings.Builder
-	var msg string
-	i0 := 1
-	if e.errors[0] != nil && e.errors[0].Error() != "" {
-		msg = e.errors[0].Error()
-	} else {
-		// e.errors[0] is nil or empty string
-		if lgth == 2 {
-			msg = e.errors[1].Error()
-			i0 = 2
-		} else if lgth > 2 {
-			msg = "errors"
-		}
-	}
-	if !e.fatal {
-		if msg == "" {
-			fmt.Fprint(&bdr, "non-fatal error")
-		} else if msg[0] != '[' {
-			fmt.Fprintf(&bdr, "[non-fatal] %v", msg)
+			str = "error"
 		} else {
-			fmt.Fprintf(&bdr, "[non-fatal]%v", msg)
+			str = "non-fatal error"
 		}
 	} else {
-		if msg == "" {
-			fmt.Fprint(&bdr, "error")
+		var bdr strings.Builder
+		var msg string
+		i0 := 1
+		if e.errors[0] != nil && e.errors[0].Error() != "" {
+			msg = e.errors[0].Error()
 		} else {
-			fmt.Fprint(&bdr, msg)
+			// e.errors[0] is nil or empty string
+			if lgth == 2 {
+				msg = e.errors[1].Error()
+				i0 = 2
+			} else if lgth > 2 {
+				msg = "errors"
+			}
+		}
+		if !e.fatal {
+			if msg == "" {
+				fmt.Fprint(&bdr, "non-fatal error")
+			} else if msg[0] != '[' {
+				fmt.Fprintf(&bdr, "[non-fatal] %v", msg)
+			} else {
+				fmt.Fprintf(&bdr, "[non-fatal]%v", msg)
+			}
+		} else {
+			if msg == "" {
+				fmt.Fprint(&bdr, "error")
+			} else {
+				fmt.Fprint(&bdr, msg)
+			}
+		}
+
+		spr := ":\n"
+		for _, err := range e.errors[i0:] {
+			if _, ok := err.(*Err); ok {
+				fmt.Fprintf(&bdr, "%v = %v", spr, err)
+			} else {
+				fmt.Fprintf(&bdr, "%v - %v", spr, err)
+			}
+			spr = "\n"
+		}
+
+		str = bdr.String()
+	}
+
+	if len(e.labels) > 0 {
+		var lbl strings.Builder
+		for _, msg := range e.labels {
+			i0, i1 := 0, len(msg)
+			if strings.HasPrefix(msg, "[") {
+				i0++
+			}
+			if strings.HasSuffix(msg, "]") {
+				i1--
+			}
+			if i1 > i0 {
+				fmt.Fprintf(&lbl, "[%v]", msg[i0:i1])
+			}
+		}
+		if strings.HasPrefix(str, "[") {
+			str = fmt.Sprintf("%v%v", lbl.String(), str)
+		} else {
+			str = fmt.Sprintf("%v %v", lbl.String(), str)
 		}
 	}
 
-	spr := ":\n"
-	for _, err := range e.errors[i0:] {
-		if _, ok := err.(*Err); ok {
-			fmt.Fprintf(&bdr, "%v = %v", spr, err)
-		} else {
-			fmt.Fprintf(&bdr, "%v - %v", spr, err)
-		}
-		spr = "\n"
-	}
-
-	return bdr.String()
+	return
 }
 
 func New(fatal bool, errs ...string) (r *Err) {
@@ -166,9 +190,7 @@ func Append(base error, errs ...error) (r *Err) {
 			set = true // 'fatal' value of the result is determined (use the one in 'base')
 			if len(r.errors) < 1 {
 				// base is of type *Err but the error list is empty
-				if r.errors == nil {
-					r.errors = []error{nil}
-				}
+				r.errors = append(r.errors, nil)
 			}
 		}
 
@@ -204,40 +226,20 @@ func Appendf(base error, format string, a ...any) *Err {
 	return Append(base, fmt.Errorf(format, a...))
 }
 
-// Wrap wrapping an error with labels
 func Wrap(e error, labels ...string) (r *Err) {
-	var bdr strings.Builder
-	for _, msg := range labels {
-		i0, i1 := 0, len(msg)
-		if strings.HasPrefix(msg, "[") {
-			i0++
-		}
-		if strings.HasSuffix(msg, "]") {
-			i1--
-		}
-		if i1 > i0 {
-			fmt.Fprintf(&bdr, "[%v]", msg[i0:i1])
-		}
-	}
-
 	var ok bool
-	if r, ok = e.(*Err); !ok {
-		str := e.Error()
-		if strings.HasPrefix(str, "[") {
-			return New(true, fmt.Sprintf("%v%v", bdr.String(), str))
+	if r, ok = e.(*Err); !ok || r == nil {
+		if e != nil && e.Error() != "" {
+			r = &Err{
+				fatal:  true,
+				errors: []error{e},
+			}
 		} else {
-			return New(true, fmt.Sprintf("%v %v", bdr.String(), str))
+			r = &Err{
+				fatal: true,
+			}
 		}
 	}
-
-	if len(r.errors) < 1 {
-		return r
-	}
-	str := r.errors[0].Error()
-	if strings.HasPrefix(str, "[") {
-		r.errors[0] = fmt.Errorf("%v%v", bdr.String(), str)
-	} else {
-		r.errors[0] = fmt.Errorf("%v %v", bdr.String(), str)
-	}
+	r.labels = append(r.labels, labels...)
 	return
 }

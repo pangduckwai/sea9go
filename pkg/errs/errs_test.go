@@ -57,7 +57,7 @@ func TestLabelChain(t *testing.T) {
 	if IsFatal(err) {
 		t.Fatalf("TestLabelChain() expected non-fatal error but got fatal")
 	}
-	xpt := fmt.Sprintf("[non-fatal][CHAIN][OF][LABELS] %v", ERR3)
+	xpt := fmt.Sprintf("[CHAIN][OF][LABELS][non-fatal] %v", ERR3)
 	if err.Error() != xpt {
 		t.Fatalf("TestLabelChain() expected \"%v\" but got \"%v\"", xpt, err.Error())
 	}
@@ -77,6 +77,21 @@ func TestLabelChain2(t *testing.T) {
 		t.Fatalf("TestLabelChain2() expected non-fatal error but got fatal")
 	}
 	fmt.Printf("TestLabelChain2()\n%v\n\n", err)
+}
+
+func TestLabelChain3(t *testing.T) {
+	var errx *Err
+	for i := range 5 {
+		errx = Append(errx, Fatalf("unit-tests (errs) %v", i))
+	}
+	err := Wrap(errx, "THIS", "IS", "A", "LIST")
+	if Count(err) != 5 {
+		t.Fatalf("TestLabelChain3() expected 5 errors but got %v", Count(err))
+	}
+	if !IsFatal(err) {
+		t.Fatalf("TestLabelChain3() expected fatal error but got non-fatal")
+	}
+	fmt.Printf("TestLabelChain3()\n%v\n\n", err)
 }
 
 func TestAppendBuiltInBase(t *testing.T) {
@@ -309,6 +324,7 @@ func TestAppendBaseBehavior(t *testing.T) {
 	if !IsFatal(err) {
 		t.Fatalf("TestAppendBaseBehavior() expected fatal error but got non-fatal")
 	}
+	err = Wrap(err, "DELAY", "APPLY", "LABELS", "UNTIL", "Error()")
 	x := err.(*Err)
 	fmt.Printf("TestAppendBaseBehavior() count: %v (%v)\n%v\n\n", Count(err), len(x.errors), err)
 }
