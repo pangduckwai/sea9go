@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-const ERR0 = "error 0"
-const ERR1 = "error 1"
-const ERR2 = "error 2"
-const ERR3 = "error 3"
+const ERR0 = "unit-tests (errs) 0"
+const ERR1 = "unit-tests (errs) 1"
+const ERR2 = "unit-tests (errs) 2"
+const ERR3 = "unit-tests (errs) 3"
 
 func TestBuiltInType(t *testing.T) {
 	var err error = errors.New(ERR0)
@@ -67,7 +67,7 @@ func TestLabelChain(t *testing.T) {
 func TestLabelChain2(t *testing.T) {
 	var errx *Err
 	for i := range 5 {
-		errx = Append(errx, NonFatalf("error %v", i))
+		errx = Append(errx, NonFatalf("unit-tests (errs) %v", i))
 	}
 	err := Wrap(errx, "THIS", "IS", "A", "LIST")
 	if Count(err) != 5 {
@@ -105,13 +105,8 @@ func TestAppendNilBase1(t *testing.T) {
 	var errs []error = []error{
 		errors.New(ERR1), nil, errors.New(ERR3), errors.New(""), nil,
 	}
-	cnt := 0
 	for _, e := range errs {
 		err = Append(err, e)
-		cnt++
-	}
-	if cnt != 5 {
-		t.Fatalf("TestAppendNilBase1() expected to run 5 times but actually %v", cnt)
 	}
 	if Count(err) != 2 {
 		t.Fatalf("TestAppendNilBase1() expected 2 errors but got %v", Count(err))
@@ -126,13 +121,8 @@ func TestAppendNilBase2(t *testing.T) {
 	var errs []error = []error{
 		nil, errors.New(ERR1), nil, errors.New(ERR3), errors.New(""),
 	}
-	cnt := 0
 	for _, e := range errs {
 		err = Append(err, e)
-		cnt++
-	}
-	if cnt != 5 {
-		t.Fatalf("TestAppendNilBase2() expected to run 5 times but actually %v", cnt)
 	}
 	if Count(err) != 2 {
 		t.Fatalf("TestAppendNilBase2() expected 2 errors but got %v", Count(err))
@@ -248,48 +238,40 @@ func TestAppendNonFatals4(t *testing.T) {
 	}
 }
 
-func TestAppendFatalFlag1(t *testing.T) {
-	var err error
+func TestAppendFatalFlag(t *testing.T) {
 	var errs []error = []error{
 		errors.New(ERR1), nil, NonFatal(ERR3), NonFatal(""), nil,
 	}
-	cnt := 0
-	for _, e := range errs {
-		err = Append(err, e)
-		cnt++
-	}
-	if cnt != 5 {
-		t.Fatalf("TestAppendFatalFlag1() expected to run 5 times but actually %v", cnt)
-	}
-	if Count(err) != 2 {
-		t.Fatalf("TestAppendFatalFlag1() expected 2 errors but got %v", Count(err))
-	}
-	if !IsFatal(err) {
-		t.Fatalf("TestAppendFatalFlag1() expected fatal error but got non-fatal")
-	}
-	fmt.Printf("TestAppendFatalFlag1()\n%v\n\n", err)
-}
 
-func TestAppendFatalFlag2(t *testing.T) {
-	var err0 error
-	var errs []error = []error{
-		errors.New(ERR1), nil, NonFatal(ERR3), NonFatal(""), nil,
+	var err1, err2 error
+	for _, e := range errs {
+		err1 = Append(err1, e)
 	}
-	err := Append(err0, errs...)
-	if Count(err) != 2 {
-		t.Fatalf("TestAppendFatalFlag2() expected 2 errors but got %v", Count(err))
+	err2 = Append(err2, errs...)
+
+	if Count(err1) != 2 {
+		t.Fatalf("TestAppendFatalFlag() expected 2 errors but got %v", Count(err1))
 	}
-	if IsFatal(err) {
-		t.Fatalf("TestAppendFatalFlag2() expected non-fatal error but got fatal")
+	if !IsFatal(err1) {
+		t.Fatalf("TestAppendFatalFlag() expected fatal error but got non-fatal")
 	}
-	fmt.Printf("TestAppendFatalFlag2()\n%v\n\n", err)
+
+	if Count(err2) != 2 {
+		t.Fatalf("TestAppendFatalFlag() expected 2 errors but got %v", Count(err2))
+	}
+	if IsFatal(err2) {
+		t.Fatalf("TestAppendFatalFlag() expected non-fatal error but got fatal")
+	}
 }
 
 func TestFlatten(t *testing.T) {
 	var err error
-	var err2 error = New(false, ERR2, ERR3)
 	var errs []error = []error{
-		errors.New(ERR0), nil, err2, NonFatal(ERR1), nil,
+		errors.New(ERR0),
+		nil,
+		New(false, ERR2, ERR3),
+		NonFatal(ERR1),
+		nil,
 	}
 	cnt := 0
 	for _, e := range errs {
@@ -308,17 +290,78 @@ func TestFlatten(t *testing.T) {
 	fmt.Printf("TestFlatten()\n%v\n\n", err)
 }
 
-func TestPackage(t *testing.T) {
+func TestAppendBaseBehavior(t *testing.T) {
+	var err error = New(true)
+	var errs []error = []error{
+		Fatal(""), NonFatal(ERR1), nil, errors.New(ERR3), Fatal(""), nil,
+	}
+	cnt := 0
+	for _, e := range errs {
+		err = Append(err, e)
+		cnt++
+	}
+	if cnt != 6 {
+		t.Fatalf("TestAppendBaseBehavior() expected to run 6 times but actually %v", cnt)
+	}
+	if Count(err) != 2 {
+		t.Fatalf("TestAppendBaseBehavior() expected 2 errors but got %v", Count(err))
+	}
+	if !IsFatal(err) {
+		t.Fatalf("TestAppendBaseBehavior() expected fatal error but got non-fatal")
+	}
+	x := err.(*Err)
+	fmt.Printf("TestAppendBaseBehavior() count: %v (%v)\n%v\n\n", Count(err), len(x.errors), err)
+}
+
+func TestAppendBaseBehavior2(t *testing.T) {
+	var errs []error = []error{
+		Fatal(""), nil, nil, NonFatal(ERR3), Fatal(""), nil,
+	}
+
+	var err1 error = New(false)
+	var err2 error
+	for _, e := range errs {
+		err1 = Append(err1, e)
+		err2 = Append(err2, e)
+	}
+
+	x1 := err1.(*Err)
+	x2 := err2.(*Err)
+
+	if Count(err1) != 1 && len(x1.errors) != 2 {
+		t.Fatalf("TestAppendBaseBehavior2() expected 1(2) errors but got %v(%v)", Count(err1), len(x1.errors))
+	}
+	if IsFatal(err1) {
+		t.Fatalf("TestAppendBaseBehavior2() expected non-fatal error but got fatal")
+	}
+	fmt.Printf("TestAppendBaseBehavior2() count: %v (%v)\n%v\n\n", Count(err1), len(x1.errors), err1)
+
+	if Count(err2) != 1 && len(x2.errors) != 2 {
+		t.Fatalf("TestAppendBaseBehavior3() expected 1(2) errors but got %v(%v)", Count(err2), len(x2.errors))
+	}
+	if IsFatal(err2) {
+		t.Fatalf("TestAppendBaseBehavior3() expected non-fatal error but got fatal")
+	}
+	fmt.Printf("TestAppendBaseBehavior3() count: %v (%v)\n%v\n\n", Count(err2), len(x2.errors), err2)
+}
+
+func TestWithinPackage(t *testing.T) {
 	err0 := New(false, "yo!")
-	var err1 error = errors.New("error 1")
-	var err2 error = NonFatal("error 2")
+	var err1 error = NonFatal(ERR1)
+	var err2 error = NonFatal(ERR2)
 	err := Append(err0, err1)
 	err.errors = append(err.errors, err2)
 	if Count(err) != 3 {
-		t.Fatalf("TestPackage() expected 3 errors but got %v", Count(err))
+		t.Fatalf("TestWithinPackage() expected 3 errors but got %v", Count(err))
 	}
 	if IsFatal(err) {
-		t.Fatalf("TestPackage() expected non-fatal error but got fatal")
+		t.Fatalf("TestWithinPackage() expected non-fatal error but got fatal")
 	}
-	fmt.Printf("TestPackage()\n%v\n\n", err)
+	if err.errors[1].Error() != ERR1 {
+		t.Fatalf("TestWithinPackage() expected \"%v\" but got \"%v\"", ERR1, err.errors[1])
+	}
+	if err.errors[2].Error() != "[non-fatal] "+ERR2 {
+		t.Fatalf("TestWithinPackage() expected \"%v\" but got \"%v\"", "[non-fatal] "+ERR2+".", err.errors[2])
+	}
+	fmt.Printf("TestWithinPackage()\n%v\n\n", err)
 }

@@ -23,7 +23,19 @@ func (e *Err) Error() string {
 	}
 
 	var bdr strings.Builder
-	msg := e.errors[0].Error()
+	var msg string
+	i0 := 1
+	if e.errors[0] != nil && e.errors[0].Error() != "" {
+		msg = e.errors[0].Error()
+	} else {
+		// e.errors[0] is nil or empty string
+		if lgth == 2 {
+			msg = e.errors[1].Error()
+			i0 = 2
+		} else if lgth > 2 {
+			msg = "errors"
+		}
+	}
 	if !e.fatal {
 		if msg == "" {
 			fmt.Fprint(&bdr, "non-fatal error")
@@ -41,9 +53,9 @@ func (e *Err) Error() string {
 	}
 
 	spr := ":\n"
-	for _, err := range e.errors[1:] {
+	for _, err := range e.errors[i0:] {
 		if _, ok := err.(*Err); ok {
-			fmt.Fprintf(&bdr, "%v - %v.", spr, err)
+			fmt.Fprintf(&bdr, "%v = %v", spr, err)
 		} else {
 			fmt.Fprintf(&bdr, "%v - %v", spr, err)
 		}
@@ -68,7 +80,11 @@ func Count(err error) int {
 		return 0
 	}
 	if e, ok := err.(*Err); ok {
-		return len(e.errors)
+		sub := 0
+		if len(e.errors) > 0 && e.errors[0] == nil {
+			sub = 1
+		}
+		return len(e.errors) - sub
 	}
 	return 1
 }
@@ -129,24 +145,33 @@ func NonFatalf(format string, a ...any) *Err {
 }
 
 // Append append new errors in 'errs' to 'base'.
-// - if 'base' is of type *Err, 'fatal' in 'base' will be used.
 // - if 'base' is not of type *Err:
-//   - 'base' will first be converted to *Err with 'fatal' default to true.
-//   - if 'errs' is not empty, the 'fatal' value of the first non-empty error in 'errs' of type *Err will be used.
+//   - 'base' will first be converted to *Err with 'fatal' default to true
+//   - if 'errs' is not empty, the 'fatal' value of the first non-empty error in 'errs' of type *Err will be used
+//
+// - if 'base' is of type *Err and is not nil:
+//   - 'fatal' in 'base' will be used
+//   - if error list of 'base' is empty, a nil will be added to the error list of the result.
 func Append(base error, errs ...error) (r *Err) {
-	var set, ok bool
-	if r, ok = base.(*Err); !ok {
-		if base != nil && base.Error() != "" {
-			r = &Err{
-				fatal:  true, // non *Err instances are considered fatal
-				errors: []error{base},
+	if len(errs) > 0 {
+		var set, ok bool
+		if r, ok = base.(*Err); !ok {
+			if base != nil && base.Error() != "" {
+				r = &Err{
+					fatal:  true, // non *Err instances are considered fatal
+					errors: []error{base},
+				}
+			}
+		} else if r != nil { // should check for nil after type assertion
+			set = true // 'fatal' value of the result is determined (use the one in 'base')
+			if len(r.errors) < 1 {
+				// base is of type *Err but the error list is empty
+				if r.errors == nil {
+					r.errors = []error{nil}
+				}
 			}
 		}
-	} else if r != nil { // should check for nil after type assertion
-		set = true // 'fatal' value of the result is determined (use the one in 'base')
-	}
 
-	if len(errs) > 0 {
 		if r == nil { // that is, if 'base' is an empty error
 			r = &Err{
 				fatal: true, // default to fatal since system errors (non *Err instances) are considered fatal.
@@ -167,6 +192,9 @@ func Append(base error, errs ...error) (r *Err) {
 				}
 			}
 		}
+	}
+	if len(r.errors) < 1 {
+		r = nil // to avoid the case Append(base, nil) returns a non-nil *Err with no error in it
 	}
 	return
 }
