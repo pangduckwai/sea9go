@@ -17,20 +17,20 @@ func (e *Err) Error() string {
 
 	if lgth < 1 {
 		if e.fatal {
-			return "fatal error"
+			return "error"
 		}
-		return "error"
+		return "non-fatal error"
 	}
 
 	var bdr strings.Builder
 	msg := e.errors[0].Error()
-	if e.fatal {
+	if !e.fatal {
 		if msg == "" {
-			fmt.Fprint(&bdr, "fatal error")
+			fmt.Fprint(&bdr, "non-fatal error")
 		} else if msg[0] != '[' {
-			fmt.Fprintf(&bdr, "[FATAL] %v", msg)
+			fmt.Fprintf(&bdr, "[non-fatal] %v", msg)
 		} else {
-			fmt.Fprintf(&bdr, "[FATAL]%v", msg)
+			fmt.Fprintf(&bdr, "[non-fatal]%v", msg)
 		}
 	} else {
 		if msg == "" {
@@ -80,31 +80,51 @@ func IsFatal(err error) bool {
 	return true // other error types are considered fatal
 }
 
-func Fatal(err string) *Err {
+func Fatal(msg string) *Err {
+	if msg != "" {
+		return &Err{
+			fatal:  true,
+			errors: []error{errors.New(msg)},
+		}
+	}
 	return &Err{
-		fatal:  true,
-		errors: []error{errors.New(err)},
+		fatal: true,
 	}
 }
 
 func Fatalf(format string, a ...any) *Err {
+	if format != "" {
+		return &Err{
+			fatal:  true,
+			errors: []error{fmt.Errorf(format, a...)},
+		}
+	}
 	return &Err{
-		fatal:  true,
-		errors: []error{fmt.Errorf(format, a...)},
+		fatal: true,
 	}
 }
 
-func NonFatal(err string) *Err {
+func NonFatal(msg string) *Err {
+	if msg != "" {
+		return &Err{
+			fatal:  false,
+			errors: []error{errors.New(msg)},
+		}
+	}
 	return &Err{
-		fatal:  false,
-		errors: []error{errors.New(err)},
+		fatal: false,
 	}
 }
 
 func NonFatalf(format string, a ...any) *Err {
+	if format != "" {
+		return &Err{
+			fatal:  false,
+			errors: []error{fmt.Errorf(format, a...)},
+		}
+	}
 	return &Err{
-		fatal:  false,
-		errors: []error{fmt.Errorf(format, a...)},
+		fatal: false,
 	}
 }
 
@@ -114,17 +134,16 @@ func NonFatalf(format string, a ...any) *Err {
 //   - 'base' will first be converted to *Err with 'fatal' default to true.
 //   - if 'errs' is not empty, the 'fatal' value of the first non-empty error in 'errs' of type *Err will be used.
 func Append(base error, errs ...error) (r *Err) {
-	var set bool
-	if e, ok := base.(*Err); !ok {
+	var set, ok bool
+	if r, ok = base.(*Err); !ok {
 		if base != nil && base.Error() != "" {
 			r = &Err{
 				fatal:  true, // non *Err instances are considered fatal
 				errors: []error{base},
 			}
 		}
-	} else if e != nil { // should check for nil after type assertion
+	} else if r != nil { // should check for nil after type assertion
 		set = true // 'fatal' value of the result is determined (use the one in 'base')
-		r = e
 	}
 
 	if len(errs) > 0 {
@@ -155,4 +174,42 @@ func Append(base error, errs ...error) (r *Err) {
 // Appendf append a new error created by fmt.Errorf().
 func Appendf(base error, format string, a ...any) *Err {
 	return Append(base, fmt.Errorf(format, a...))
+}
+
+// Wrap wrapping an error with labels
+func Wrap(e error, labels ...string) (r *Err) {
+	var bdr strings.Builder
+	for _, msg := range labels {
+		i0, i1 := 0, len(msg)
+		if strings.HasPrefix(msg, "[") {
+			i0++
+		}
+		if strings.HasSuffix(msg, "]") {
+			i1--
+		}
+		if i1 > i0 {
+			fmt.Fprintf(&bdr, "[%v]", msg[i0:i1])
+		}
+	}
+
+	var ok bool
+	if r, ok = e.(*Err); !ok {
+		str := e.Error()
+		if strings.HasPrefix(str, "[") {
+			return New(true, fmt.Sprintf("%v%v", bdr.String(), str))
+		} else {
+			return New(true, fmt.Sprintf("%v %v", bdr.String(), str))
+		}
+	}
+
+	if len(r.errors) < 1 {
+		return r
+	}
+	str := r.errors[0].Error()
+	if strings.HasPrefix(str, "[") {
+		r.errors[0] = fmt.Errorf("%v%v", bdr.String(), str)
+	} else {
+		r.errors[0] = fmt.Errorf("%v %v", bdr.String(), str)
+	}
+	return
 }
