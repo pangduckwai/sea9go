@@ -249,7 +249,7 @@ func main() {
 
 	////////////////////
 	// prepare clients
-	client, err := client.Client(30 * time.Second)
+	client, err := client.Client(30*time.Second, "server.crt", "client.crt", "client.key")
 	if err != nil {
 		fatal("[NEW] %v", err)
 	}

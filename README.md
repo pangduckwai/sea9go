@@ -69,10 +69,11 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 ### v0.3.2
 - Improve the http client wrapper `http/client`
 
-### v0.4.5
+### v0.4.6
 - Allow `http/server` to have no idle time
 - Change package name `errors` to `errs`
 - Add wrapping of '*Err' with labels
 - Change behaviour of `errs.Append()` to align with the package's underlying logic
 - Improve returns of `errs.Error()` for multi-items errors
 - Fix bug of multi-items errors with `errs.Wrap()`
+- Update usage of `errs` in `http/client`

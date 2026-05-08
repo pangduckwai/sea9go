@@ -36,6 +36,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 	var certPool *x509.CertPool
 	var keyPair tls.Certificate
 	var cp, kp int
+	var errx error = errs.New(false)
 
 	if pths != "" {
 		bufs, err = os.ReadFile(pths)
@@ -44,7 +45,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 				err = errs.Fatalf("[CERT] error reading server cert: %v", err)
 				return
 			} else {
-				err = errs.Appendf(err, "[CERT] server cert '%v' missing", pths)
+				errx = errs.Appendf(errx, "[CERT] server cert '%v' missing", pths)
 			}
 		} else {
 			certPool = x509.NewCertPool()
@@ -60,7 +61,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 				err = errs.Fatalf("[CERT] error reading client cert: %v", err)
 				return
 			} else {
-				err = errs.Appendf(err, "[CERT] client cert '%v' missing", pthc)
+				errx = errs.Appendf(errx, "[CERT] client cert '%v' missing", pthc)
 			}
 		} else {
 			kp++
@@ -71,7 +72,7 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 				err = errs.Fatalf("[CERT] error reading client key: %v", err)
 				return
 			} else {
-				err = errs.Appendf(err, "[CERT] client key '%v' missing", pthk)
+				errx = errs.Appendf(errx, "[CERT] client key '%v' missing", pthk)
 			}
 		} else {
 			kp++
@@ -99,6 +100,9 @@ func getTlsConfig(path ...string) (tlsCfg *tls.Config, err error) {
 		tlsCfg = &tls.Config{} // No cert
 	}
 
+	if errs.Count(errx) > 0 {
+		err = errx
+	}
 	return
 }
 
