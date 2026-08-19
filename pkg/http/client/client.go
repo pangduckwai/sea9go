@@ -11,7 +11,12 @@ import (
 	"time"
 )
 
-func getTlsConfig(path ...string) (tlsCfg *tls.Config, es, ec, ek, err error) {
+func getTlsConfig(
+	path ...string, // [0] - path to server cert, [1] - path to mTLS client cert, [2] - path to mTLS client key
+) (
+	tlsCfg *tls.Config,
+	es, ec, ek, err error, // server cert error, client cert error, client key error
+) {
 	var pths, pthc, pthk string
 	switch len(path) {
 	case 2:
@@ -144,7 +149,7 @@ func Client(
 
 // ClientInsecure prepare a http client which skip TLS cert verification.
 func ClientInsecure(
-	timeout int,
+	timeout time.Duration,
 	path ...string,
 ) (
 	client *http.Client,
@@ -167,7 +172,7 @@ func ClientInsecure(
 	tlsCfg.InsecureSkipVerify = true
 
 	client = &http.Client{
-		Timeout: time.Duration(timeout) * time.Second,
+		Timeout: timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: tlsCfg,
 		},
