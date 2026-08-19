@@ -155,3 +155,12 @@ func TestLogging3(t *testing.T) {
 	}
 	fmt.Println(str)
 }
+
+func TestMoss(t *testing.T) {
+	inp := make(map[string][]string)
+	inp["this"] = []string{"THIS", "IS", "REALLY"}
+	inp["is"] = []string{"IS", "REALLY", "A"}
+	inp["a"] = []string{"REALLY", "A", "TEST"}
+	inp["test"] = []string{"A", "TEST", "!!!"}
+	fmt.Println(FormatMoss(inp))
+}
