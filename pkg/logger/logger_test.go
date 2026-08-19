@@ -123,7 +123,7 @@ func TestLogging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	str, err := Format(inp)
+	str, err := Format("", inp)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestLogging2(t *testing.T) {
 	inp["is"] = []string{"IS", "REALLY", "A"}
 	inp["a"] = []string{"REALLY", "A", "TEST"}
 	inp["test"] = []string{"A", "TEST", "!!!"}
-	str, err := Format(inp)
+	str, err := Format("", inp)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestLogging3(t *testing.T) {
 	inp["is"] = []interface{}{"IS", "REALLY", "A"}
 	inp["a"] = []interface{}{"REALLY", "A", "TEST"}
 	inp["test"] = []interface{}{"A", "TEST", "!!!"}
-	str, err := Format(inp)
+	str, err := Format("", inp)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,5 +162,5 @@ func TestMoss(t *testing.T) {
 	inp["is"] = []string{"IS", "REALLY", "A"}
 	inp["a"] = []string{"REALLY", "A", "TEST"}
 	inp["test"] = []string{"A", "TEST", "!!!"}
-	fmt.Println(FormatMoss(inp))
+	fmt.Println(FormatMoss("\t", inp))
 }

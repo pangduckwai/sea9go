@@ -8,10 +8,10 @@ import (
 const INDENT = "  "
 
 // FormatMosos formats a Map Of String Slices into a readable string representation.
-func FormatMoss(inp map[string][]string) string {
+func FormatMoss(indent string, inp map[string][]string) string {
 	var sb strings.Builder
 	for k, v := range inp {
-		fmt.Fprintf(&sb, "%v: ", k)
+		fmt.Fprintf(&sb, "%v%v: ", indent, k)
 		for _, f := range v {
 			fmt.Fprintf(&sb, " \"%v\"", f)
 		}
@@ -21,9 +21,9 @@ func FormatMoss(inp map[string][]string) string {
 }
 
 // Format formats a Map Of interface{} into a readable string representation.
-func Format(inp map[string]interface{}) (string, error) {
+func Format(indent string, inp map[string]interface{}) (string, error) {
 	var sb strings.Builder
-	err := format("", inp, &sb)
+	err := format(indent, inp, &sb)
 	if err != nil {
 		return "", err
 	}
