@@ -77,3 +77,8 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 - Improve returns of `errs.Error()` for multi-items errors
 - Fix bug of multi-items errors with `errs.Wrap()`
 - Remove intra-dependencies within `sea9go`
+
+### v0.5.0
+- Fix func signature of `http/client`
+- Add log formatter for `map[string]any`
+- Add log formatter for `map[string][]string`
