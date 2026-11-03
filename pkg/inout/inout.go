@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 )
 
 type Encoder interface {
@@ -244,9 +243,6 @@ func Write(
 		wtr.Flush()
 	} else {
 		rdr := bytes.NewReader(data)
-		if wtr == nil {
-			wtr = bufio.NewWriter(os.Stdout)
-		}
 		if len(enc) <= 1 {
 			err = enc[0].Encode(rdr, wtr)
 			if err != nil {

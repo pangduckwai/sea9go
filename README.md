@@ -64,7 +64,7 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 - Rename package `io`
 
 ### v0.3.1
-- Add server name to `http/server/`
+- Add server name to `http/server`
 
 ### v0.3.2
 - Improve the http client wrapper `http/client`
@@ -78,7 +78,8 @@ implements traversal of `[]yaml.MapItem` structures from yaml while keeping item
 - Fix bug of multi-items errors with `errs.Wrap()`
 - Remove intra-dependencies within `sea9go`
 
-### v0.5.0
+### v0.5.1
+- Remove dead code from `inout`
 - Fix func signature of `http/client`
 - Add log formatter for `map[string]any`
 - Add log formatter for `map[string][]string`
