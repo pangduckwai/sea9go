@@ -4,20 +4,27 @@ package ordered
 import (
 	"fmt"
 
+	"github.com/pangduckwai/sea9go/pkg/traverse"
 	"gopkg.in/yaml.v2"
 )
 
 // Traverse traverse a yaml while preserving order.
 func Traverse(
 	inp []yaml.MapItem,
-	action func([]string, interface{}) (interface{}, error),
+	action func(
+		traverse.NodeType, // node type
+		[]string, // keys
+		interface{}, // value
+	) (
+		interface{}, // processed value
+		error,
+	),
 	keys ...string,
 ) (
 	out []yaml.MapItem,
 	err error,
 ) {
 	var nxt []yaml.MapItem
-	out = make([]yaml.MapItem, 0)
 	for _, itm := range inp {
 		nxt, err = _traverse(itm.Key.(string), itm.Value, action, keys...)
 		if err != nil {
@@ -31,7 +38,14 @@ func Traverse(
 func _traverse(
 	key string,
 	ifc interface{},
-	action func([]string, interface{}) (interface{}, error),
+	action func(
+		traverse.NodeType,
+		[]string,
+		interface{},
+	) (
+		interface{},
+		error,
+	),
 	keys ...string,
 ) (
 	out []yaml.MapItem,
@@ -40,6 +54,13 @@ func _traverse(
 	keys = append(keys, key)
 	switch typ := ifc.(type) {
 	case []yaml.MapItem:
+		var trm interface{}
+		trm, err = action(traverse.OBJT, keys, ifc)
+		if err != nil && err == traverse.ShouldStop && trm != nil {
+			out = append(out, yaml.MapItem{Key: key, Value: trm})
+			err = nil
+			break
+		}
 		var nxt []yaml.MapItem
 		nxt, err = Traverse(typ, action, keys...)
 		if err != nil {
@@ -48,6 +69,12 @@ func _traverse(
 		out = append(out, yaml.MapItem{Key: key, Value: nxt})
 	case []interface{}:
 		var itm interface{}
+		itm, err = action(traverse.LIST, keys, ifc)
+		if err != nil && err == traverse.ShouldStop && itm != nil {
+			out = append(out, yaml.MapItem{Key: key, Value: itm})
+			err = nil
+			break
+		}
 		nxt := make([]interface{}, len(typ))
 		for i, f := range typ {
 			itm, err = __traverse(f, action, append(keys, fmt.Sprintf("[%v]", i))...)
@@ -60,7 +87,7 @@ func _traverse(
 		out = append(out, yaml.MapItem{Key: key, Value: nxt})
 	default:
 		var act interface{}
-		act, err = action(keys, typ)
+		act, err = action(traverse.LEAF, keys, typ)
 		if err != nil {
 			err = fmt.Errorf("[%v]%v", key, err)
 			break
@@ -72,7 +99,14 @@ func _traverse(
 
 func __traverse(
 	ifc interface{},
-	action func([]string, interface{}) (interface{}, error),
+	action func(
+		traverse.NodeType,
+		[]string,
+		interface{},
+	) (
+		interface{},
+		error,
+	),
 	keys ...string,
 ) (
 	out interface{},
@@ -80,6 +114,13 @@ func __traverse(
 ) {
 	switch typ := ifc.(type) {
 	case []yaml.MapItem:
+		var trm interface{}
+		trm, err = action(traverse.OBJT, keys, ifc)
+		if err != nil && err == traverse.ShouldStop && trm != nil {
+			out = trm
+			err = nil
+			break
+		}
 		var nxt []yaml.MapItem
 		nxt, err = Traverse(typ, action, keys...)
 		if err != nil {
@@ -100,7 +141,7 @@ func __traverse(
 		out = nxt
 	default:
 		var act interface{}
-		act, err = action(keys, typ)
+		act, err = action(traverse.LEAF, keys, typ)
 		if err != nil {
 			break
 		}

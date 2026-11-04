@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pangduckwai/sea9go/pkg/traverse"
 	"gopkg.in/yaml.v2"
 )
 
@@ -73,13 +74,7 @@ func TestTraverse(t *testing.T) {
 	cnt := 0
 	_, err = Traverse(
 		inp,
-		func(keys []string, in any) (out any, err error) {
-			out = fmt.Sprintf("%v", in)
-			if out != verify[cnt] {
-				t.Fatalf("TestTraverse() %v %v vs %v", cnt, out, verify[cnt])
-			}
-			cnt++
-
+		func(typ traverse.NodeType, keys []string, in any) (out any, err error) {
 			var sb strings.Builder
 			sb.WriteString(keys[0])
 			for _, k := range keys[1:] {
@@ -88,6 +83,22 @@ func TestTraverse(t *testing.T) {
 				}
 				sb.WriteString(k)
 			}
+
+			if typ != traverse.LEAF {
+				t := "..OBJT.."
+				if typ == traverse.LIST {
+					t = "..LIST.."
+				}
+				fmt.Printf("TestTraverse() %-19v %v\n", t, sb.String())
+				return
+			}
+
+			out = fmt.Sprintf("%v", in)
+			if out != verify[cnt] {
+				t.Fatalf("TestTraverse() %v %v vs %v", cnt, out, verify[cnt])
+			}
+			cnt++
+
 			fmt.Printf("TestTraverse() %19v %v\n", out, sb.String())
 			return
 		},

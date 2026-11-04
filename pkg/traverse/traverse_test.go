@@ -1,8 +1,10 @@
 package traverse
 
 import (
+	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -74,13 +76,7 @@ func TestTraverse(t *testing.T) {
 	cnt := 0
 	_, err = Traverse(
 		inp,
-		func(keys []string, in any) (out any, err error) {
-			out = fmt.Sprintf("%v", in)
-			if !slices.Contains(verify, out.(string)) {
-				t.Fatalf("TestTraverse() %v %v not found", cnt, out)
-			}
-			cnt++
-
+		func(typ NodeType, keys []string, in any) (out any, err error) {
 			var sb strings.Builder
 			sb.WriteString(keys[0])
 			for _, k := range keys[1:] {
@@ -89,11 +85,128 @@ func TestTraverse(t *testing.T) {
 				}
 				sb.WriteString(k)
 			}
+
+			if typ != LEAF {
+				t := "..OBJT.."
+				if typ == LIST {
+					t = "..LIST.."
+				}
+				fmt.Printf("TestTraverse() %-19v %v\n", t, sb.String())
+				return
+			}
+
+			out = fmt.Sprintf("%v", in)
+			if !slices.Contains(verify, out.(string)) {
+				t.Fatalf("TestTraverse() %v %v not found", cnt, out)
+			}
+			cnt++
+
 			fmt.Printf("TestTraverse() %19v %v\n", out, sb.String())
 			return
 		},
 	)
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestError(t *testing.T) {
+	err1 := ShouldStop
+	err2 := errors.New("file does not exist")
+
+	if err1 != ShouldStop {
+		t.Fatal("should equal...")
+	}
+
+	if err2 == ShouldStop {
+		t.Fatal("should not equal...")
+	}
+
+	fmt.Println("TestError() test passed")
+}
+
+func ctrlParseKey(key string) int {
+	ln := len(key)
+	if ln < 3 {
+		return -1
+	}
+	if key[0] != '[' || key[ln-1] != ']' || key[1] == '-' {
+		return -1
+	}
+	idx, err := strconv.Atoi(key[1 : ln-1])
+	if err != nil {
+		return -1
+	}
+	return idx
+}
+
+var kEYS = []string{"hello", "[0]", "[9]", "137", "[-46]", "[]", "[90]", "[there]", "[2048]", "[3]", "[7]", "41"}
+
+func TestParseKey(t *testing.T) {
+	for i := 0; i < 11; i++ {
+		idx := ParseKey(kEYS[i])
+		switch i {
+		case 0:
+			fallthrough
+		case 3:
+			fallthrough
+		case 4:
+			fallthrough
+		case 11:
+			if idx != -2 {
+				t.Fatalf("'%v' is not a valid index with value %v", kEYS[i], idx)
+			}
+		case 5:
+			if idx != -3 {
+				t.Fatalf("'%v' is not a valid index with value %v", kEYS[i], idx)
+			}
+		case 7:
+			if idx != -1 {
+				t.Fatalf("'%v' is not a valid index with value %v", kEYS[i], idx)
+			}
+		case 1:
+			if idx != 0 {
+				t.Fatalf("'%v' should be a valid index instead of %v", kEYS[i], idx)
+			}
+		case 2:
+			if idx != 9 {
+				t.Fatalf("'%v' should be a valid index instead of %v", kEYS[i], idx)
+			}
+		case 6:
+			if idx != 90 {
+				t.Fatalf("'%v' should be a valid index instead of %v", kEYS[i], idx)
+			}
+		case 8:
+			if idx != 2048 {
+				t.Fatalf("'%v' should be a valid index instead of %v", kEYS[i], idx)
+			}
+		case 9:
+			if idx != 3 {
+				t.Fatalf("'%v' should be a valid index instead of %v", kEYS[i], idx)
+			}
+		case 10:
+			if idx != 7 {
+				t.Fatalf("'%v' should be a valid index instead of %v", kEYS[i], idx)
+			}
+		}
+	}
+	fmt.Println("TestParseKey() test passed")
+}
+
+func BenchmarkParseKey(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		ParseKey(kEYS[i%11])
+		i++
+	}
+}
+
+func BenchmarkCtrlParseKey(b *testing.B) {
+	b.ResetTimer()
+	i := 0
+	for b.Loop() {
+		ctrlParseKey(kEYS[i%11])
+		i++
 	}
 }
